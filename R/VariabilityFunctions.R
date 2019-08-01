@@ -1,3 +1,91 @@
+CalculateVarTotal <- function(dat.impute.log){
+  cells.var <- GetCellSd(dat.impute.log, "", log2.scale = FALSE, fn = SumSqrDev) %>%
+    dplyr::rename(cell.var = cell.sd)
+  return(cells.var)
+}
+
+CalculateVarWithinChromo <- function(dat.impute.log, jchromos = c(paste("chr", seq(19), sep = ""), "chrX", "chrY")){
+  # do variance across chromosomes
+  # jchromos <- c(paste("chr", seq(19), sep = ""), "chrX", "chrY")
+  jchromos.grep <- paste(jchromos, ":", sep = "")
+  
+  
+  # calculate variance within chromosomes
+  cells.var.chromo.within <- lapply(jchromos.grep, function(jstr){
+    cells.sd <- GetCellSd(dat.impute.log, grep.str = jstr, log2.scale = FALSE, fn = SumSqrDev) %>%
+      mutate(mark = jmark)
+    # jtest <- apply(dat.mat, MARGIN = 2, FUN = SumSqrDev)
+    return(cells.sd)
+  }) %>%
+    bind_rows() %>%
+  dplyr::rename(cell.var.within = cell.sd)
+  
+  # summarize across chromosomes
+  cells.var.chromo.within.sum <- cells.var.chromo.within %>%
+    group_by(cell) %>%
+    summarise(cell.var.within.sum = sum(cell.var.within))
+  
+  # normalize by total bins 
+  nbins <- nrow(dat.impute.log)
+  
+  cells.var.chromo.within.sum <- cells.var.chromo.within.sum %>%
+    mutate(cell.var.within.sum.norm = cell.var.within.sum / nbins)
+  
+  return(cells.var.chromo.within.sum)
+} 
+
+CalculateVarAcrossChromo <- function(dat.mat.log, jchromos = c(paste("chr", seq(19), sep = ""), "chrX", "chrY")){
+  # calculate variance across chromosomes
+  
+  jchromos.grep <- paste(jchromos, ":", sep = "")
+  
+  cells.chromo.mean <- lapply(jchromos.grep, function(jstr){
+    
+    # subset dat.mat.log by chromosome
+    dat.mat.log.sub <- dat.mat.log[grepl(jstr, rownames(dat.mat.log)), ]
+    # get average across chromosomes
+    chromo.avg <- colMeans(dat.mat.log.sub)
+    chromo.avg.dat <- data.frame(cell = names(chromo.avg), chromo.mean = chromo.avg, label = jstr, nbins = nrow(dat.mat.log.sub))
+    return(chromo.avg.dat)
+  }) %>%
+    bind_rows()
+  
+  # calculate global mean
+  dat.mat.global.mean <- unlist(colMeans(dat.mat.log))
+  
+  # make sure cell names align with cells.chromo.mean.wide.mat ???
+  # names(dat.mat.global.mean) <- sapply(names(dat.mat.global.mean), function(x) strsplit(x, "\\.")[[1]][[2]])
+  dat.mat.global.mean <- dat.mat.global.mean[order(names(dat.mat.global.mean))]
+  
+  chromo.constant <- cells.chromo.mean %>%
+    group_by(label) %>%
+    summarise(nbins = unique(nbins))
+  
+  cells.chromo.mean.wide <- tidyr::spread(cells.chromo.mean, key = cell, value = chromo.mean)
+  cells.chromo.mean.wide.mat <- as.matrix(cells.chromo.mean.wide %>% dplyr::select(-label, -nbins))
+  rownames(cells.chromo.mean.wide.mat) <- cells.chromo.mean.wide$label
+  assertthat::assert_that(all(names(dat.mat.global.mean) == colnames(cells.chromo.mean.wide.mat)))
+  cells.var.chromo.across <- sweep(x = cells.chromo.mean.wide.mat, MARGIN = 2, STATS = dat.mat.global.mean, FUN = "-") ^ 2
+  assertthat::assert_that(all(chromo.constant$label == rownames(cells.chromo.mean.wide.mat)))
+  cells.var.chromo.across <- sweep(x = cells.var.chromo.across, MARGIN = 1, STATS = chromo.constant$nbins, FUN = "*")
+  cells.var.chromo.across <- colSums(cells.var.chromo.across)
+  cells.var.chromo.across <- data.frame(cell = names(cells.var.chromo.across), cell.var.across = cells.var.chromo.across)
+  return(cells.var.chromo.across)
+}
+
+MergeVarWithinAcross <- function(cells.var.chromo.within.sum, cells.var.chromo.across, cells.var){
+  # merge cells.chromo.mean
+  cells.var.merged <- left_join(cells.var.chromo.within.sum, cells.var.chromo.across)
+  cells.var.merged <- left_join(cells.var.merged, cells.var)
+  
+  cells.var.merged$cell.var.across.expect <- cells.var.merged$cell.var - cells.var.merged$cell.var.within.sum
+  cells.var.merged$jdiff <- cells.var.merged$cell.var.across.expect - cells.var.merged$cell.var.across
+  cells.var.merged$within.frac <- cells.var.merged$cell.var.within.sum / cells.var.merged$cell.var
+  return(cells.var.merged)
+}
+  
+
+
 FitGetPval <- function(jsub, jform){
   jfit <- lm(formula = jform, data = jsub)
   pval <- summary(jfit)$coefficients[2, "Pr(>|t|)"]
