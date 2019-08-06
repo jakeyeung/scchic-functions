@@ -173,7 +173,9 @@ LoadMats <- function(infs, cells.keep, preprocess.names = TRUE){
     return(x[rnames.common, ])
   })
   mat.merge <- do.call(cbind, sparse.mats)
-  colnames(mat.merge) <- sapply(colnames(mat.merge), PreprocessSamp)
+  if (preprocess.names){
+  	colnames(mat.merge) <- sapply(colnames(mat.merge), PreprocessSamp)
+  }
   cells.keep.i <- which(colnames(mat.merge) %in% cells.keep)
   mat.merge <- mat.merge[, cells.keep.i]
   assertthat::assert_that(ncol(mat.merge) > 0)
