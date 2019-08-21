@@ -123,6 +123,13 @@ GetStrain <- function(x){
   return(strain)
 }
 
+ReadDinuc <- function(inf){
+  dat <- fread(inf)[-1, ] %>%
+    dplyr::rename(dinuc = sampleName) 
+  dat.long <- gather(dat, key = "samp", value = "count", -dinuc)
+  return(dat.long)
+}
+
 ReadDinucGastru <- function(inf){
   dat <- fread(inf)[-1, ] %>%
     dplyr::rename(dinuc = sampleName) 
@@ -165,7 +172,7 @@ GetEmptyWells <- function(indx = 0){
 
 # Matrix functions --------------------------------------------------------
 
-LoadMats <- function(infs, cells.keep, preprocess.names = TRUE){
+LoadMats <- function(infs, cells.keep, preprocess.names = FALSE){
   sparse.mats <- lapply(infs, function(inf) readRDS(inf))
   rnames <- lapply(sparse.mats, rownames)
   rnames.common <- Reduce(intersect, rnames)
@@ -175,6 +182,9 @@ LoadMats <- function(infs, cells.keep, preprocess.names = TRUE){
   mat.merge <- do.call(cbind, sparse.mats)
   if (preprocess.names){
   	colnames(mat.merge) <- sapply(colnames(mat.merge), PreprocessSamp)
+  }
+  if (missing(cells.keep)){
+    cells.keep <- rnames.common
   }
   cells.keep.i <- which(colnames(mat.merge) %in% cells.keep)
   mat.merge <- mat.merge[, cells.keep.i]
