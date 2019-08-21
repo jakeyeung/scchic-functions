@@ -1,3 +1,48 @@
+AnnotateTermsToNearestGene <- function(tm.result, inf.tss="/Users/yeung/data/scchic/tables/gene_tss_winsize.50000.bed"){
+  terms.long <- data.frame(term = colnames(tm.result$terms), as.data.frame(t(tm.result$terms)), stringsAsFactors = FALSE) %>%
+    gather(key = "topic", value = "weight", -term) %>%
+    mutate(topic = gsub("X", "", topic)) %>%
+    group_by(topic) %>%
+    arrange(desc(weight)) %>%
+    mutate(rnk = seq(length(weight))) %>%
+    rowwise()
+  terms.filt.top <- terms.long %>%
+    # filter(rnk < 1000) %>%  # DO GENOME WIDE
+    rowwise()
+  tss.dat <- fread(inf.tss, col.names = c("seqnames", "start", "end", "tssname"))
+  tss.dat$gene <- sapply(tss.dat$tssname, function(x) strsplit(x, ";")[[1]][[2]])
+  
+  annots.biomart <- out.objs$regions.annotated %>%
+    mutate(midpt = start + (end - start) / 2) %>%
+    filter(region_coord %in% terms.filt.top$term)
+  
+  annots.gr <- makeGRangesFromDataFrame(annots.biomart %>% dplyr::select(seqnames, start, end, SYMBOL, region_coord), keep.extra.columns = TRUE)
+  annots.tss.gr <- makeGRangesFromDataFrame(tss.dat, keep.extra.columns = TRUE)
+  
+  out <- findOverlaps(annots.tss.gr, annots.gr, type = "within")
+  out2 <- findOverlaps(annots.gr, annots.tss.gr, type = "any")
+  
+  out2.df = data.frame(annots.gr[queryHits(out2),], annots.tss.gr[subjectHits(out2),]) %>%
+    mutate(midpt = start + round(width / 2),
+           midpt.1 = start.1 + round(width.1 / 2),
+           dist.to.tss = midpt.1 - midpt)
+  
+  # filter closest
+  out2.df.closest <- out2.df %>%
+    group_by(region_coord) %>%
+    filter(abs(dist.to.tss) == min(abs(dist.to.tss)))
+  
+  terms.new <- paste(out2.df.closest$region_coord, out2.df.closest$gene, sep = ";")
+  terms.hash <- hash::hash(out2.df.closest$region_coord, terms.new)
+  
+  terms.filt <- terms.filt.top %>%
+    mutate(termgene = ifelse(!is.null(terms.hash[[term]]), terms.hash[[term]], NA)) %>%
+    filter(!is.na(termgene)) %>%
+    mutate(gene = sapply(termgene, function(x) strsplit(x, ";")[[1]][[2]])) %>%
+    group_by(gene)  # dont filter use
+  return(terms.filt)
+}
+
 OrderTopicsByEntropy <- function(tm.result, jquantile = 0.99){
   # analyze topic matrix across cells
   topics.long <- data.frame(cell = rownames(tm.result$topics), as.data.frame(tm.result$topics)) %>%
