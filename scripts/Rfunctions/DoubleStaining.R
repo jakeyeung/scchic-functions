@@ -10,6 +10,14 @@ GetDoubleName <- function(jname.test, cell.lambda.hash, prefix = "Pseudo:"){
 
 GetLLMerged <- function(w, cell.count.raw.merged, dat.impute.repress.lst, dat.impute.active, return.mat = FALSE){
   w.vec <- c(w, 1-w)  # active proportion, repress proportion 
+  if (any(w.vec < 0)){
+    print(paste("Error message: w is negative:"))
+    print(w.vec)
+    w.vec[which.min(w.vec)] <- 0
+    w.vec[which.max(w.vec)] <- 1
+    print("Fixed w:")
+    print(w.vec)
+  }
   dat.imputed.merged <- lapply(dat.impute.repress.lst, function(repress.row){
     t(outmat <- apply(dat.impute.active, 1, function(act.row){
       matrixStats::colWeightedMeans(rbind(act.row, repress.row), w = w.vec)  # standard weighted.mean is SUPER slow 
