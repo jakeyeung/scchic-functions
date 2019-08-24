@@ -57,6 +57,8 @@ parser$add_argument('infile', metavar='INFILE',
                                             help='Infile')
 parser$add_argument('outfile', metavar='OUTFILE',
                                             help='Out RDS')
+parser$add_argument('tmpdir', metavar='TMPDIR',
+                                            help='Tmp dir')
 parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
                         help="Print extra output [default]")
                                         
@@ -64,12 +66,15 @@ parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
 # otherwise if options not found on command line then set defaults, 
 args <- parser$parse_args()
 
+
 # print some progress messages to stderr if "quietly" wasn't requested
 if ( args$verbose ) { 
     print("Arguments:")
     print(args)
 }
 
+# set.tempdir(args$tmpdir)
+setwd(args$tmpdir)
 mat <- ReadMat(args$infile, as.sparse = TRUE)
 saveRDS(mat, file = args$outfile)
 
