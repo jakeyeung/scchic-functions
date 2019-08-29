@@ -16,8 +16,10 @@ setwd(here())
 
 print(paste("Work directory: ", getwd()))
 
-source("scripts/Rfunctions/ParseStrings.R")
-source("scripts/Rfunctions/Aux.R")
+# source("scripts/Rfunctions/ParseStrings.R")
+# source("scripts/Rfunctions/Aux.R")
+
+library(scchicFuncs)
 
 args <- commandArgs(trailingOnly=TRUE)
 
