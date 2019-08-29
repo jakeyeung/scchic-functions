@@ -17,15 +17,28 @@ args.to.numeric <- function(arg, default = FALSE){
 
 read.table.handlerows = function(infile){
   # Read table and handle potential duplicate rows
+  # check if gz file, unzip if it is
+  is.gz <- endsWith(infile, ".gz")
   dat = tryCatch({
     dat <- read.table(infile, header = T, row.names = 1)
   }, error = function(e){
-    dat <- read.table(infile, header = T)
+    if (!is.gz){
+      dat <- read.table(infile, header = T)
+    } else {
+      dat <- read.table(gzfile(infile), header = T)
+    }
       rnames <- make.names(dat[, 1], unique = TRUE)
       rownames(dat) <- rnames
       dat <- dat[, 2:ncol(dat)]  # remove first column, it is in rownames
       return(dat)
   })
+
+  # decompressing with data.table() requires /tmp access, which doesn't work for qsub
+  # dat <- as.data.frame(data.table::fread(infile, header = T))
+  # rnames <- make.names(dat[, 1], unique = TRUE)
+  # dat <- dat[, 2:ncol(dat)]
+  # rownames(dat) <- rnames
+  return(dat)
 }
 
 ridge.regression = function(N,E,lambda) {
