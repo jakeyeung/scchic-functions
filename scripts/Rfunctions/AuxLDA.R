@@ -11,30 +11,30 @@ AnnotateTermsToNearestGene <- function(tm.result, inf.tss="/Users/yeung/data/scc
     rowwise()
   tss.dat <- fread(inf.tss, col.names = c("seqnames", "start", "end", "tssname"))
   tss.dat$gene <- sapply(tss.dat$tssname, function(x) strsplit(x, ";")[[1]][[2]])
-  
+
   annots.biomart <- out.objs$regions.annotated %>%
     mutate(midpt = start + (end - start) / 2) %>%
     filter(region_coord %in% terms.filt.top$term)
-  
+
   annots.gr <- makeGRangesFromDataFrame(annots.biomart %>% dplyr::select(seqnames, start, end, SYMBOL, region_coord), keep.extra.columns = TRUE)
   annots.tss.gr <- makeGRangesFromDataFrame(tss.dat, keep.extra.columns = TRUE)
-  
+
   out <- findOverlaps(annots.tss.gr, annots.gr, type = "within")
   out2 <- findOverlaps(annots.gr, annots.tss.gr, type = "any")
-  
+
   out2.df = data.frame(annots.gr[queryHits(out2),], annots.tss.gr[subjectHits(out2),]) %>%
     mutate(midpt = start + round(width / 2),
            midpt.1 = start.1 + round(width.1 / 2),
            dist.to.tss = midpt.1 - midpt)
-  
+
   # filter closest
   out2.df.closest <- out2.df %>%
     group_by(region_coord) %>%
     filter(abs(dist.to.tss) == min(abs(dist.to.tss)))
-  
+
   terms.new <- paste(out2.df.closest$region_coord, out2.df.closest$gene, sep = ";")
   terms.hash <- hash::hash(out2.df.closest$region_coord, terms.new)
-  
+
   terms.filt <- terms.filt.top %>%
     mutate(termgene = ifelse(!is.null(terms.hash[[term]]), terms.hash[[term]], NA)) %>%
     filter(!is.na(termgene)) %>%
@@ -119,6 +119,28 @@ PlotAllMarks <- function(jgene, jpeak, jmarks, out.objs, custom.settings){
   return(out)
 }
 
+AnnotateBins <- function(terms.mat, top.thres=0.995){
+  # assertthat::assert_that(is.list(tm.result))  # expect terms
+  # kchoose <- out.lda@k
+  # tm.result <- posterior(out.lda)
+  regions <- data.frame(seqnames = sapply(colnames(terms.mat), GetChromo),
+                        start = sapply(colnames(terms.mat), GetStart),
+                        end = sapply(colnames(terms.mat), GetEnd),
+                        stringsAsFactors = FALSE)
+  rownames(regions) <- colnames(terms.mat)
+  regions <- subset(regions, !seqnames %in% c("chr20", "chr21"))
+
+  regions.range <- makeGRangesFromDataFrame(as.data.frame(regions))
+  regions.annotated <- as.data.frame(annotatePeak(regions.range,
+                                                  TxDb=TxDb.Mmusculus.UCSC.mm10.knownGene,
+                                                  annoDb='org.Mm.eg.db'))
+  regions.annotated$region_coord <- names(regions.range)
+
+  topic.regions <- lapply(seq(nrow(terms.mat)), function(clst){
+    return(SelectTopRegions(terms.mat[clst, ], colnames(terms.mat), method = "thres", method.val = top.thres))
+  })
+  return(list('topic.regions' = topic.regions, 'regions.annotated' = regions.annotated))
+}
 
 LoadLDABins <- function(jmark, jbin=TRUE, top.thres=0.995, inf = NULL, convert.chr20.21.to.X.Y = TRUE, add.chr.prefix = FALSE, choose.k = "auto"){
   # jbin <- "TRUE"

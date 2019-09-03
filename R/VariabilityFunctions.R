@@ -1,3 +1,11 @@
+CalculateVarAll <- function(dat.impute.log, jchromos){
+  cells.var.chromo.within.sum <- CalculateVarWithinChromo(dat.impute.log = dat.impute.log, jchromos = jchromos)
+  cells.var.chromo.across <- CalculateVarAcrossChromo(dat.mat.log = dat.impute.log, jchromos = jchromos)
+  cells.var.total <- CalculateVarTotal(dat.impute.log)
+  cells.var.chromo.merged <- MergeVarWithinAcross(cells.var.chromo.within.sum, cells.var.chromo.across, cells.var.total)
+  return(cells.var.chromo.merged)
+}
+
 CalculateVarTotal <- function(dat.impute.log){
   cells.var <- GetCellSd(dat.impute.log, "", log2.scale = FALSE, fn = SumSqrDev) %>%
     dplyr::rename(cell.var = cell.sd)
