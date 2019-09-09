@@ -5,10 +5,8 @@
 
 CollapseTaggedCountCnames <- function(dat, cnames.indx = 1:3){
   # 2nd row often redundant, merge with first row
-  if (any(class(dat) == "data.table")){
-    colnames(dat)[cnames.indx] <- unlist(dat[1, ..cnames.indx], use.names = FALSE)
-  } else {
-    colnames(dat)[cnames.indx] <- unlist(dat[1, cnames.indx], use.names = FALSE)
-  }
+  dat <- as.data.frame(dat)
+  colnames(dat)[cnames.indx] <- unlist(dat[1, cnames.indx], use.names = FALSE)
+  dat <- dat[-1, ]
   return(dat)
 }
