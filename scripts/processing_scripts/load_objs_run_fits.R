@@ -44,7 +44,7 @@ library(here)
 setwd(here())
 print("Current wd")
 print(getwd())
-source("scripts/Rfunctions/DoubleStaining.R")
+# source("scripts/Rfunctions/DoubleStaining.R")
 
 parser$add_argument('infile', metavar='INFILE',
                                             help='Input .RData containing count.dat, dat.impute.repress.lst, dat.impute.active, dat.louv')
