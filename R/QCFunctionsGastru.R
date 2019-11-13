@@ -5,6 +5,25 @@
 
 # Gastru samps: E7p5-EHF-CastBl6-H3K36me3-20190214-002_249
 
+ReadRZ <- function(inf, remove.nones = FALSE){
+  dat.tmp <- as.data.frame(fread(inf, sep = ",", header = TRUE))
+  colnames(dat.tmp)[[1]] <- dat.tmp[1, 1]
+  dat.tmp <- dat.tmp[-1, ]
+
+  if (remove.nones){
+    dat.tmp <- subset(dat.tmp, recognizedSequence != "None")
+  }
+
+  dat.mat <- as.matrix(dat.tmp[, -1])
+  dat.mat.sum <- colSums(dat.mat, na.rm = TRUE)
+  dat.mat.ta <- subset(dat.tmp, recognizedSequence == "TA", select = -recognizedSequence)  # I think Buys calls it AT for some reason here? Need to check actually, might be an old bam file
+  dat.merged <- rbind(dat.mat.ta, dat.mat.sum)
+  # add first column
+  dat.merged.annot <- cbind(data.frame(V1 = c("TA_start", "total")), dat.merged)  # call it V1 and rownames same as Buys TA_obs_per_cell.csv
+  return(dat.merged.annot)
+}
+
+
 StageToNumeric <- function(stage, to.numeric = TRUE){
   # can be vector
   stage <- gsub("_EHF", "", stage)
