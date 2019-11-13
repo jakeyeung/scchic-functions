@@ -5,18 +5,37 @@
 
 # Gastru samps: E7p5-EHF-CastBl6-H3K36me3-20190214-002_249
 
+StageToNumeric <- function(stage, to.numeric = TRUE){
+  # can be vector
+  stage <- gsub("_EHF", "", stage)
+  stage <- gsub("_EBLB", "", stage)
+  stage <- gsub("p", "\\.", stage)
+  stage <- sapply(stage, function(x) strsplit(x, "_")[[1]][[1]])
+  if (to.numeric){
+    stage.numer <- as.numeric(gsub("^E", "", stage))
+    if (!all(!is.na(stage.numer))){
+      print("Unxepcted NAs found")
+      print(unique(stage))
+    }
+    assertthat::assert_that(all(!is.na(stage.numer)))
+    return(stage.numer)
+  } else{
+    return(stage)
+  }
+}
+
 GetStage <- function(x, do.preprocess = FALSE){
   # preprocessed sample
   if (do.preprocess){
     x <- PreprocessSamp(x)
-  } 
+  }
   strsplit(x, "-")[[1]][[1]]
 }
 
 
 GetPlateCoord <- function(cell, platecols = 24, is.zero.base = TRUE){
   # cell0 -> 1,1
-  indx <- as.numeric(strsplit(cell, "cell")[[1]][[2]]) 
+  indx <- as.numeric(strsplit(cell, "cell")[[1]][[2]])
   if (is.zero.base){
     indx <- indx + 1
   }
@@ -36,13 +55,13 @@ PreprocessSamp <- function(x){
     timestr.orig <- paste(strsplit(x, "-")[[1]][1:2], collapse = "-")
     timestr.new <- gsub("-", "_", timestr.orig)
     x <- gsub(timestr.orig, timestr.new, x)
-  } 
+  }
   if (GetNMarks(x) == 2){
     mark.indx <- which(startsWith(strsplit(x, "-")[[1]], prefix = "H3K"))
     markstr.orig <- paste(strsplit(x, "-")[[1]][mark.indx], collapse = "-")
     markstr.new <- gsub("-", "_", markstr.orig)
     x <- gsub(markstr.orig, markstr.new, x)
-  } 
+  }
   return(x)
 }
 
@@ -125,14 +144,14 @@ GetStrain <- function(x){
 
 ReadDinuc <- function(inf){
   dat <- fread(inf)[-1, ] %>%
-    dplyr::rename(dinuc = sampleName) 
+    dplyr::rename(dinuc = sampleName)
   dat.long <- gather(dat, key = "samp", value = "count", -dinuc)
   return(dat.long)
 }
 
 ReadDinucGastru <- function(inf){
   dat <- fread(inf)[-1, ] %>%
-    dplyr::rename(dinuc = sampleName) 
+    dplyr::rename(dinuc = sampleName)
   dat.long <- gather(dat, key = "samp", value = "count", -dinuc) %>%
     rowwise() %>%
     mutate(samp = PreprocessSamp(samp)) %>%
