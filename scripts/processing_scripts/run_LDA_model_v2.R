@@ -1,14 +1,13 @@
 # Jake Yeung
-# run_LDA_model.R
-# Run LDA model 
-# 2018-12-19
+# run_LDA_model2.R
+# Clean up LDA after several months of usage we do things differently
 
 jstart <- Sys.time() 
 
 library(topicmodels)
 library(dplyr)
 library(ggplot2)
-library(ldatuning)
+# library(ldatuning)  # dont do LDA tuning anymore, hard to find easy consensus
 library(Matrix)
 library(here)
 
@@ -16,10 +15,8 @@ setwd(here())
 
 print(paste("Work directory: ", getwd()))
 
-# source("scripts/Rfunctions/ParseStrings.R")
-# source("scripts/Rfunctions/Aux.R")
-
-library(scchicFuncs)
+source("scripts/Rfunctions/ParseStrings.R")
+source("scripts/Rfunctions/Aux.R")
 
 args <- commandArgs(trailingOnly=TRUE)
 
@@ -28,36 +25,21 @@ print(args)
 
 inpath <- args[[1]]
 outdir <- args[[2]]
-nclst <- StrToNumeric(args[[3]])
-topic.vec <- as.numeric(StrToVector(args[[4]], delim = ","))
-tunemodels <- StrToBool(args[[5]])
-meanmax <- StrToNumeric(args[[6]])  # remove suspicious peaks 
-cellmin <- StrToNumeric(args[[7]])  # remove cells with low counts
-cellmax <- StrToNumeric(args[[8]])  # remove suspiciious cells 
-binarizemat <- StrToBool(args[[9]])
-projname <- args[[10]]
+# nclst <- StrToNumeric(args[[3]])
+topic.vec <- as.numeric(StrToVector(args[[3]], delim = ","))
+binarizemat <- StrToBool(args[[4]])
+projname <- args[[5]]  # helps with writing pdf and Robj output
+# tunemodels <- StrToBool(args[[5]])  # input a topic vec directly
+# remove bad cells and peaks BEFORE hand 
+# meanmax <- StrToNumeric(args[[6]])  # remove suspicious peaks 
+# cellmin <- StrToNumeric(args[[7]])  # remove cells with low counts
+# cellmax <- StrToNumeric(args[[8]])  # remove suspiciious cells 
 
-if (is.na(nclst)){
-  stop(paste("nclst must be numeric, found", nclst))
-}
-if (is.na(meanmax)){
-  stop(paste("meanmax must be numeric, found", meanmax))
-}
-if (is.na(tunemodels)){
-  stop(paste("tunemodels must be TRUE or FALSE, found", tunemodels))
-}
 print(paste("Will iterate through", length(topic.vec), "Ks"))
 print(topic.vec)
 
-plotpath <- file.path(outdir, paste0("plots_meanfilt.", projname, ".pdf"))
-outpath <- file.path(outdir, paste0("lda_out_meanfilt.", projname, ".Robj"))
-# tunepath <- file.path(outdir, paste0("lda_tuning.meanfilt.K-", nclst, ".Robj"))
-
-# constants
-# countmax <- 100  # peaks with more than these counts are filtered out for suspicious 
-# this works for small peaks but probably needs to be increased for larger peaks?
-# meanmax <- 1  # peaks with more than these counts are filtered out for suspicious 
-# cellmin <- 
+plotpath <- file.path(outdir, paste0("plots.", projname, ".pdf"))
+outpath <- file.path(outdir, paste0("ldaOut.", projname, ".Robj"))
 
 # print args
 print("Args:")
