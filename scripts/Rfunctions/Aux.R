@@ -1,3 +1,20 @@
+GetGeneAnnotsHash <- function(inf.annot){
+  dat.annot <- data.table::fread(inf.annot, col.names = c("chromo", "start", "end", "bname"))
+  # add chr
+  dat.annot$chromo <- paste("chr", dat.annot$chromo, sep = "")
+  rnames.old <- paste(dat.annot$chromo, paste(dat.annot$start, dat.annot$end, sep = "-"), sep = ":")
+  rnames.new <- dat.annot$bname
+  annots.hash <- hash::hash(rnames.old, rnames.new)
+}
+
+AddGeneNameToRows <- function(mat, annots.hash){
+  # mat rownmaes got stripped of gene names, add them back
+  rnames.old <- rownames(mat)
+  rnames.new <- sapply(rnames.old, function(x) annots.hash[[x]])
+  rownames(mat) <- rnames.new
+  return(mat)
+}
+
 GetBins <- function(jchromo, midpt, jname, Q, winsize = 100000L){
   jleft <- midpt - winsize / 2
   jright <- midpt + winsize / 2
