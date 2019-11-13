@@ -27,9 +27,9 @@ parser <- ArgumentParser()
 # by default ArgumentParser will add an help option 
 
 parser$add_argument('infile', metavar='INFILE RDATA',
-                                            help='Input .RData containing LDA object')
+                                            help='Input .RData containing LDA object named out.objs$out.lda or out.lda. Or .rds of LDA_Gibbs class')
 parser$add_argument('inmat', metavar='INMAT RDS',
-                                            help='Input .rds containing sparse matrix (bins in rows, samples in columsn)')
+                                            help='Input .rds containing sparse matrix (bins in rows, samples in columns). Or .RData of count.dat list object with count.dat$counts slot. dgCMatirx class')
 parser$add_argument('outfile', metavar='OUTFILE',
                                             help='Output RData containing posterior of predicted counts')
 parser$add_argument("-b", "--binarizemat", action="store_true", default=FALSE,
@@ -47,8 +47,23 @@ if ( args$verbose ) {
     print(args)
 }
 
+if (endsWith(args$infile, ".rds")){
+    out.lda <- readRDS(args$infile)
+    out.objs <- list()
+    out.objs$out.lda <- out.lda
+} else {
+    objnames <- load(args$infile, v=T)  # out.objs$out.lda or out.lda
+    if (any(objnames == "out.objs")){
+        # dont do any rename 
+        print("Object loaded is out.objs, doing nothing")
+    } else if (any(objnames == "out.lda")){
+        # rename
+        print("Object loaded is out.lda, renaming to out.objs with slot out.lda")
+        out.objs <- list()
+        out.objs$out.lda <- out.lda
+    }
+}
 
-load(args$infile, v=T)  # out.objs$out.lda 
 assertthat::assert_that(class(out.objs$out.lda) == "LDA_Gibbs")
 
 if (endsWith(args$inmat, ".rds")){
@@ -68,6 +83,7 @@ if (args$binarizemat){
   print(paste('Max count after binarizing', max(count.dat$counts)))
 }
 
+print("Projecting new samples onto trained LDA")
 system.time(
   out.lda.predict <- posterior(out.objs$out.lda, t(as.matrix(count.dat$counts)))
 )
