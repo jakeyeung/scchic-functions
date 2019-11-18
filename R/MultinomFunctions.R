@@ -16,8 +16,8 @@ CollapseRowsByGene <- function(count.mat, as.long = TRUE){
     return(count.mat.long)
   } else {
     jout <- as.data.frame(dcast(count.mat.long, Var1 ~ Var2, value.var = "count"))
-    rownames(jout) <- Var1; jout$Var1 <- NULLA
-    jout <- Matrix(jout, sparse = TRUE)
+    rownames(jout) <- jout$Var1; jout$Var1 <- NULL
+    jout <- Matrix(as.matrix(jout), sparse = TRUE)
     return(jout)
   }
 }
@@ -36,7 +36,7 @@ MultinomFitsToLong.percell <- function(cname, LL.ctype.lst, count.filt){
   cell.counts <- Matrix::colSums(count.filt)
   LL.vec <- LL.ctype.lst[[cname]]
   p.vec <- p.ctype.lst[[cname]]
-  cell.count = cell.counts[[cname]]
+  cell.count <- cell.counts[[cname]]
   dat.tmp <- data.frame(cell = cname, LL = LL.vec, p = p.vec, ctype.pred = names(LL.vec), cell.size = cell.count, stringsAsFactors = FALSE)
   return(dat.tmp)
 }
@@ -71,6 +71,19 @@ FitMultinoms <- function(count.filt, all.cells, probs.lst.filt, exppower = 0.5){
   LL.vec <- sapply(probs.lst.filt, function(jprob){
     assertthat::assert_that(all(names(cell.vec) == names(jprob)))
     return(dmultinom(x = cell.vec, prob = jprob^(exppower), log = TRUE))
+  })
+})
+}
+
+FitMultinomsFn <- function(count.filt, all.cells, probs.lst.filt, fn){
+		# allow jprob to pass through an arbitrary function
+  names(all.cells) <- all.cells
+  LL.ctype.lst <- lapply(all.cells, function(cell.name){
+  cell.vec <- count.filt[, cell.name]
+  # cell.vec <- cell.vec[which(cell.vec > 0)]
+  LL.vec <- sapply(probs.lst.filt, function(jprob){
+    assertthat::assert_that(all(names(cell.vec) == names(jprob)))
+    return(dmultinom(x = cell.vec, prob = fn(jprob), log = TRUE))
   })
 })
 }
