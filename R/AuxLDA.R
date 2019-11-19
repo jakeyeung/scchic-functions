@@ -3,6 +3,24 @@
 # File: ~/projects/scchicFuncs/R/AuxLDA.R
 #
 
+DoUmapAndLouvain <- function(topics.mat, jsettings){
+  umap.out <- umap(topics.mat, config = jsettings)
+  dat.umap.long <- data.frame(cell = rownames(umap.out$layout), umap1 = umap.out$layout[, 1], umap2 = umap.out$layout[, 2])
+  dat.umap.long <- DoLouvain(topics.mat = topics.mat, custom.settings.louv = jsettings, dat.umap.long = dat.umap.long)
+  return(dat.umap.long)
+}
+
+CollapseMatByLouvains <- function(count.mat, dat.umap.longs){
+  jmat <- left_join(melt(as.matrix(count.mat)), dat.umap.longs %>% dplyr::select(c(cell, louvmark)), by = c("Var2" = "cell")) %>%
+    group_by(louvmark, Var1) %>%
+    summarise(count = sum(value)) %>%
+    dcast(data = ., Var1 ~ louvmark) %>%
+    as.data.frame()
+  rownames(jmat) <- jmat$Var1
+  jmat$Var1 <- NULL
+  return(jmat)
+}
+
 GetTmResultFromGensim <- function(inf.topics, inf.terms, inf.cellnames, inf.binnames){
   cellnames <- fread(inf.cellnames, header=FALSE)$V1
   binnames <- fread(inf.binnames, header=FALSE)$V1

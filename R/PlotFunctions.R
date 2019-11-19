@@ -3,6 +3,56 @@
 # File: ~/projects/scchic_gastru/functions/PlotFunctions.R
 # 
 
+GetGeneAnnotsHash <- function(inf.annot){
+  dat.annot <- data.table::fread(inf.annot, col.names = c("chromo", "start", "end", "bname"))
+  # add chr
+  dat.annot$chromo <- paste("chr", dat.annot$chromo, sep = "")
+  rnames.old <- paste(dat.annot$chromo, paste(dat.annot$start, dat.annot$end, sep = "-"), sep = ":")
+  rnames.new <- dat.annot$bname
+  annots.hash <- hash::hash(rnames.old, rnames.new)
+}
+
+AddGeneNameToRows <- function(mat, annots.hash){
+  # mat rownmaes got stripped of gene names, add them back
+  rnames.old <- rownames(mat)
+  rnames.new <- sapply(rnames.old, function(x) annots.hash[[x]])
+  rownames(mat) <- rnames.new
+  return(mat)
+}
+
+PlotDecreasingWeights <- function(jsub.terms, jtitle = "", order.term.by.weight = TRUE, textsize = 3, themesize = 5){
+  if (order.term.by.weight){
+    jsub.terms <-  jsub.terms %>%
+      mutate(term = forcats::fct_reorder(term, dplyr::desc(weight)))
+  }
+  m.top <- jsub.terms %>%
+    ggplot(aes(x = term, y = log10(weight), label = gene)) +
+    geom_point(size = 0.25) +
+    theme_bw(themesize) +
+    geom_text_repel(size = textsize, segment.size = 0.1, segment.alpha = 0.25) +
+    theme(aspect.ratio=0.2, panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1, size = 3.5)) +
+    xlab("") + ylab("Log10 Bin Weight") +
+    ggtitle(jtitle)
+  return(m.top)
+}
+
+PlotPseudobulkZscore <- function(dat.bulk.sub, order.celltype.by.zscore = TRUE, xlabsize = 8, themesize = 12){
+  if (order.celltype.by.zscore){
+    dat.bulk.sub <- dat.bulk.sub %>%
+      mutate(celltype = forcats::fct_reorder(celltype, dplyr::desc(zscore), .fun = median))
+  }
+  m.exprs <- ggplot(dat.bulk.sub,
+                    aes(x = celltype , y = zscore)) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_jitter(width = 0.1, size = 0.5) +
+    theme_classic(themesize) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = xlabsize)) +
+    ggtitle(paste("topic", jtop, "Top:", keeptop, "N Unique Genes", length(top.genes)))
+  return(m.exprs)
+
+}
+
+
 PlotSpatialGene <- function(dat.adj, jfits.nlm.all, jgene){
   jgene.short <- strsplit(jgene, "_")[[1]][[2]]
   jsub <- dat.adj %>% filter(gene == jgene)
