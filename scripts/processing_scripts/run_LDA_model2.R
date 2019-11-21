@@ -22,6 +22,7 @@ library(dplyr)
 library(ggplot2)
 library(Matrix)
 library(here)
+library(scchicFuncs)
 
 # create parser object
 parser <- ArgumentParser()
@@ -53,8 +54,8 @@ if ( args$verbose ) {
 
 setwd(here())
 print(paste("Work directory: ", getwd()))
-source("scripts/Rfunctions/ParseStrings.R")
-source("scripts/Rfunctions/Aux.R")
+# source("scripts/Rfunctions/ParseStrings.R")
+# source("scripts/Rfunctions/Aux.R")
 
 # args <- commandArgs(trailingOnly=TRUE)
 
