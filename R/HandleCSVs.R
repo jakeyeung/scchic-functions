@@ -3,6 +3,20 @@
 # File: ~/projects/scchicFuncs/R/HandleCSVs.R
 #
 
+GrepAndWriteMat <- function(mat.tmp, jgrp, jgrp.name, outf){
+  cols.i <- grepl(jgrp, colnames(mat.tmp))
+  mat.tmp.filt <- mat.tmp[, cols.i]
+  assertthat::assert_that(ncol(mat.tmp.filt) > 0)
+  print(jgrp.name)
+  print(jgrp)
+  print(dim(mat.tmp.filt))
+  print(1 - Matrix::nnzero(mat.tmp.filt) / length(mat.tmp.filt))
+  # write to output
+  saveRDS(mat.tmp.filt, file = outf)
+  return(mat.tmp.filt)
+}
+
+
 ReadMatTSSFormat <- function(inf, as.sparse = TRUE){
   dat <- fread(inf)[-1, ] %>%
     dplyr::rename(chromo = sampleName,
