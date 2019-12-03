@@ -1,3 +1,38 @@
+GrepAndWriteMat <- function(mat.tmp, jgrp, jgrp.name, outf){
+  cols.i <- grepl(jgrp, colnames(mat.tmp))
+  mat.tmp.filt <- mat.tmp[, cols.i]
+  assertthat::assert_that(ncol(mat.tmp.filt) > 0)
+  print(jgrp.name)
+  print(jgrp)
+  print(dim(mat.tmp.filt))
+  # write to output
+  saveRDS(mat.tmp.filt, file = outf)
+  return(mat.tmp.filt)
+}
+
+GetMarkFromStr <- function(x){
+  jpat <- "H3K[0-9]*.me[0-9]"
+  jmatch <- stringr::str_match(x, jpat)
+  assertthat::assert_that(nrow(jmatch) == 1 & ncol(jmatch) == 1)
+  return(jmatch[[1]])
+}
+
+ClipLast <- function(x, jsep = "-"){
+  # B6-13W1-BM-H3K4me3-1_269 -> B6-13W1-BM-H3K4me3
+  jsplit <- strsplit(x, jsep)[[1]]
+  # remove last one
+  N <- length(jsplit) - 1
+  return(paste(jsplit[1:N], collapse = jsep))
+}
+
+KeepLast <- function(x, jsep = "-"){
+  # B6-13W1-BM-H3K4me3-1_269 -> 1_269
+  jsplit <- strsplit(x, jsep)[[1]]
+  # remove last one
+  N <- length(jsplit)
+  return(jsplit[[N]])
+}
+
 GetBins <- function(jchromo, midpt, jname, Q, winsize = 100000L){
   jleft <- midpt - winsize / 2
   jright <- midpt + winsize / 2

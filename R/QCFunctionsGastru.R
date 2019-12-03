@@ -5,6 +5,44 @@
 
 # Gastru samps: E7p5-EHF-CastBl6-H3K36me3-20190214-002_249
 
+ReadLH <- function(inf, remove.nones = FALSE){
+  dat.tmp <- as.data.frame(fread(inf, sep = ",", header = TRUE))
+  colnames(dat.tmp)[[1]] <- dat.tmp[1, 1]
+  dat.tmp <- dat.tmp[-1, ]
+
+  if (remove.nones){
+    dat.tmp <- subset(dat.tmp, ligationOverhangSequence != "None")
+  }
+
+  dat.mat <- as.matrix(dat.tmp[, -1])
+  dat.mat.sum <- colSums(dat.mat, na.rm = TRUE)
+  dat.mat.ta <- subset(dat.tmp, ligationOverhangSequence == "TA", select = -ligationOverhangSequence)  # I think Buys calls it AT for some reason here? Need to check actually, might be an old bam file
+  dat.merged <- rbind(dat.mat.ta, dat.mat.sum)
+  # add first column
+  dat.merged.annot <- cbind(data.frame(V1 = c("TA_start", "total")), dat.merged)  # call it V1 and rownames same as Buys TA_obs_per_cell.csv
+  return(dat.merged.annot)
+}
+
+ReadLH.SummarizeTA <- function(infs.rz, remove.nones = FALSE, na.to.zero = TRUE){
+  dats <- lapply(infs.rz, function(inf){
+    dat <- ReadLH(inf, remove.nones = remove.nones)
+    # make long
+    dat.TA <- tidyr::gather(dat %>% filter(V1 == "TA_start"), key = "samp", value = "count", -V1) %>%
+      dplyr::rename(TA.count = count) %>%
+      dplyr::select(-V1) %>%
+	  mutate(TA.count = ifelse(is.na(TA.count), 0, TA.count))
+    dat.Total <- tidyr::gather(dat %>% filter(V1 == "total"), key = "samp", value = "count", -V1) %>%
+      dplyr::rename( total.count = count) %>%
+      dplyr::select(-V1) %>%
+	  mutate(total.count = ifelse(is.na(total.count), 0, total.count))
+    # merge the two
+    dat.long <- left_join(dat.TA, dat.Total, by = c("samp"))
+  }) %>%
+    bind_rows() %>%
+    mutate(TA.frac = TA.count / total.count)
+  return(dats)
+}
+
 ReadRZ <- function(inf, remove.nones = FALSE){
   dat.tmp <- as.data.frame(fread(inf, sep = ",", header = TRUE))
   colnames(dat.tmp)[[1]] <- dat.tmp[1, 1]

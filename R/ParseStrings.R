@@ -3,6 +3,7 @@
 # Functions to parse strings and convert them to different data types  
 # 2018-12-22
 
+
 StrToVector <- function(s, delim = "-"){
   # WT-KO-Kidney -> c("WT", "KO", "Kidney")
   return(strsplit(s, delim)[[1]])
