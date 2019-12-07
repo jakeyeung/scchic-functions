@@ -4,7 +4,7 @@
 #
 
 FilterBinsByBlacklist <- function(rnames.all.common, blfile){
-  assertthat::assert_that(file.exists(bfile))
+  assertthat::assert_that(file.exists(blfile))
   rnames.gr <- makeGRangesFromDataFrame(data.frame(seqnames = sapply(rnames.all.common, GetChromo, add.chr=FALSE),
                                                    start = sapply(rnames.all.common, GetStart),
                                                    end = sapply(rnames.all.common, GetEnd)))
