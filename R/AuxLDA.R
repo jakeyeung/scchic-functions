@@ -35,7 +35,7 @@ GetTmResultFromGensim <- function(inf.topics, inf.terms, inf.cellnames, inf.binn
   return(tm.result)
 }
 
-AnnotateBins <- function(terms.mat, top.thres=0.995, inf.tss="/Users/yeung/data/scchic/tables/gene_tss_winsize.50000.bed"){
+AnnotateBins <- function(terms.mat, top.thres=0.995, inf.tss="/Users/yeung/data/scchic/tables/gene_tss_winsize.50000.bed", txdb = TxDb.Mmusculus.UCSC.mm10.knowngene, annodb = "orgMm.eg.db"){
   # assertthat::assert_that(is.list(tm.result))  # expect terms
   # kchoose <- out.lda@k
   # tm.result <- posterior(out.lda)
@@ -50,8 +50,10 @@ AnnotateBins <- function(terms.mat, top.thres=0.995, inf.tss="/Users/yeung/data/
 
   regions.range <- makeGRangesFromDataFrame(as.data.frame(regions))
   regions.annotated <- as.data.frame(annotatePeak(regions.range,
-                                                  TxDb=TxDb.Mmusculus.UCSC.mm10.knownGene,
-                                                  annoDb='org.Mm.eg.db'))
+                                                  # TxDb=TxDb.Mmusculus.UCSC.mm10.knownGene,
+                                                  TxDb=txdb,
+                                                  # annoDb='org.Mm.eg.db'))
+                                                  annoDb=annodb))
   regions.annotated$region_coord <- names(regions.range)
 
   topic.regions <- lapply(seq(nrow(terms.mat)), function(clst){
