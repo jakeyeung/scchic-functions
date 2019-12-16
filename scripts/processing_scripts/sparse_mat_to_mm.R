@@ -54,8 +54,14 @@ if ( args$verbose ) {
     print(args)
 }
 
-
-load(args$infile, v=T)  # count.dat$counts
+if (endsWith(args$infile, ".rds")){
+  count.dat <- list()
+  print(paste("reading rds", args$infile))
+  count.dat$counts <- readRDS(args$infile)
+} else {
+  print(paste("Assuming", args$infile, "is an .RData file"))
+  load(args$infile, v=T)  # count.dat$counts
+}
 
 if ( args$binarize ) {
   print("Binarizing matrix...")
