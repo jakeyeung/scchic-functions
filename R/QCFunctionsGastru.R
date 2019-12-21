@@ -23,7 +23,7 @@ ReadLH <- function(inf, remove.nones = FALSE){
   return(dat.merged.annot)
 }
 
-ReadLH.SummarizeTA <- function(infs.rz, remove.nones = FALSE, na.to.zero = TRUE){
+ReadLH.SummarizeTA <- function(infs.rz, remove.nones = FALSE, na.to.zero = TRUE, bind.rows = TRUE){
   dats <- lapply(infs.rz, function(inf){
     dat <- ReadLH(inf, remove.nones = remove.nones)
     # make long
@@ -36,10 +36,14 @@ ReadLH.SummarizeTA <- function(infs.rz, remove.nones = FALSE, na.to.zero = TRUE)
       dplyr::select(-V1) %>%
 	  mutate(total.count = ifelse(is.na(total.count), 0, total.count))
     # merge the two
-    dat.long <- left_join(dat.TA, dat.Total, by = c("samp"))
-  }) %>%
-    bind_rows() %>%
-    mutate(TA.frac = TA.count / total.count)
+    dat.long <- left_join(dat.TA, dat.Total, by = c("samp")) %>%
+      rowwise() %>%
+      mutate(TA.frac = TA.count / total.count)
+  })
+  if (bind.rows){
+    dats <- dats %>% 
+      bind_rows()
+  }
   return(dats)
 }
 
