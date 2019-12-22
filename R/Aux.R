@@ -1,4 +1,4 @@
-GrepAndWriteMat <- function(mat.tmp, jgrp, jgrp.name, outf, invert=FALSE){
+GrepAndWriteMat <- function(mat.tmp, jgrp, jgrp.name, outf, invert=FALSE, save.rds = TRUE){
   cols.i <- grepl(jgrp, colnames(mat.tmp))
   if (invert){
     cols.i <- !cols.i
@@ -9,7 +9,9 @@ GrepAndWriteMat <- function(mat.tmp, jgrp, jgrp.name, outf, invert=FALSE){
   print(jgrp)
   print(dim(mat.tmp.filt))
   # write to output
-  saveRDS(mat.tmp.filt, file = outf)
+  if (save.rds){
+    saveRDS(mat.tmp.filt, file = outf)
+  }
   return(mat.tmp.filt)
 }
 
