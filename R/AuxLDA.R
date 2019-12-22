@@ -3,6 +3,73 @@
 # File: ~/projects/scchicFuncs/R/AuxLDA.R
 #
 
+AnnotateBins2 <- function(terms.mat, top.thres=0.995, inf.tss="/Users/yeung/data/scchic/tables/gene_tss_winsize.50000.bed", txdb = TxDb.Mmusculus.UCSC.mm10.knowngene, annodb = "orgMm.eg.db", chromos.keep=c(paste("chr", seq(19), sep = ""), "chrX", "chrY")){
+  assertthat::assert_that(file.exists(inf.tss))
+  assertthat::assert_that(class(terms.mat) == "matrix")
+  regions <- data.frame(seqnames = sapply(colnames(terms.mat), GetChromo),
+                        start = sapply(colnames(terms.mat), GetStart),
+                        end = sapply(colnames(terms.mat), GetEnd),
+                        stringsAsFactors = FALSE)
+  rownames(regions) <- colnames(terms.mat)
+  # regions <- subset(regions, !seqnames %in% c("chr20", "chr21"))
+  print("Chromos to keep")
+  print(chromos.keep)
+  regions <- subset(regions, seqnames %in% chromos.keep)
+
+  regions.range <- makeGRangesFromDataFrame(as.data.frame(regions))
+  regions.annotated <- as.data.frame(annotatePeak(regions.range,
+                                                  # TxDb=TxDb.Mmusculus.UCSC.mm10.knownGene,
+                                                  TxDb=txdb,
+                                                  # annoDb='org.Mm.eg.db'))
+                                                  annoDb=annodb))
+  regions.annotated$region_coord <- names(regions.range)
+
+  topic.regions <- lapply(seq(nrow(terms.mat)), function(clst){
+    return(SelectTopRegions(terms.mat[clst, ], colnames(terms.mat), method = "thres", method.val = top.thres))
+  })
+
+  print(paste("Using TSS definitions from:", inf.tss))
+  terms.long <- data.frame(term = colnames(terms.mat), as.data.frame(t(terms.mat)), stringsAsFactors = FALSE) %>%
+    gather(key = "topic", value = "weight", -term) %>%
+    mutate(topic = gsub("X", "", topic)) %>%
+    group_by(topic) %>%
+    arrange(desc(weight)) %>%
+    mutate(rnk = seq(length(weight))) %>%
+    rowwise()
+  terms.filt.top <- terms.long %>%
+    # filter(rnk < 1000) %>%  # DO GENOME WIDE
+    rowwise()
+  tss.dat <- fread(inf.tss, col.names = c("seqnames", "start", "end", "tssname"))
+  tss.dat$gene <- sapply(tss.dat$tssname, function(x) strsplit(x, ";")[[1]][[2]])
+
+  annots.biomart <- regions.annotated %>%
+    mutate(midpt = start + (end - start) / 2) %>%
+    filter(region_coord %in% terms.filt.top$term)
+
+  annots.gr <- makeGRangesFromDataFrame(annots.biomart %>% dplyr::select(seqnames, start, end, SYMBOL, region_coord), keep.extra.columns = TRUE)
+  annots.tss.gr <- makeGRangesFromDataFrame(tss.dat, keep.extra.columns = TRUE)
+
+  out <- findOverlaps(annots.tss.gr, annots.gr, type = "within")
+  out2 <- findOverlaps(annots.gr, annots.tss.gr, type = "any")
+
+  out2.df = data.frame(annots.gr[queryHits(out2),], annots.tss.gr[subjectHits(out2),]) %>%
+    mutate(midpt = start + round(width / 2),
+           midpt.1 = start.1 + round(width.1 / 2),
+           dist.to.tss = midpt.1 - midpt)
+
+  # filter closest
+  out2.df.closest <- out2.df %>%
+    group_by(region_coord) %>%
+    filter(abs(dist.to.tss) == min(abs(dist.to.tss)))
+
+  terms.new <- paste(out2.df.closest$region_coord, out2.df.closest$gene, sep = ";")
+  terms.hash <- hash::hash(out2.df.closest$region_coord, terms.new)
+
+  terms.annot <- terms.filt.top %>%
+    mutate(termgene = ifelse(!is.null(terms.hash[[term]]), terms.hash[[term]], NA))
+  return(list('topic.regions' = topic.regions, 'regions.annotated' = regions.annotated, 'terms.annot' = terms.annot, 'out2.df.closest' = out2.df.closest))
+}
+
 DoUmapAndLouvain <- function(topics.mat, jsettings){
   umap.out <- umap(topics.mat, config = jsettings)
   dat.umap.long <- data.frame(cell = rownames(umap.out$layout), umap1 = umap.out$layout[, 1], umap2 = umap.out$layout[, 2])
@@ -35,7 +102,7 @@ GetTmResultFromGensim <- function(inf.topics, inf.terms, inf.cellnames, inf.binn
   return(tm.result)
 }
 
-AnnotateBins <- function(terms.mat, top.thres=0.995, inf.tss="/Users/yeung/data/scchic/tables/gene_tss_winsize.50000.bed"){
+AnnotateBins <- function(terms.mat, top.thres=0.995, inf.tss="/Users/yeung/data/scchic/tables/gene_tss_winsize.50000.bed", txdb = TxDb.Mmusculus.UCSC.mm10.knowngene, annodb = "orgMm.eg.db"){
   # assertthat::assert_that(is.list(tm.result))  # expect terms
   # kchoose <- out.lda@k
   # tm.result <- posterior(out.lda)
@@ -50,8 +117,10 @@ AnnotateBins <- function(terms.mat, top.thres=0.995, inf.tss="/Users/yeung/data/
 
   regions.range <- makeGRangesFromDataFrame(as.data.frame(regions))
   regions.annotated <- as.data.frame(annotatePeak(regions.range,
-                                                  TxDb=TxDb.Mmusculus.UCSC.mm10.knownGene,
-                                                  annoDb='org.Mm.eg.db'))
+                                                  # TxDb=TxDb.Mmusculus.UCSC.mm10.knownGene,
+                                                  TxDb=txdb,
+                                                  # annoDb='org.Mm.eg.db'))
+                                                  annoDb=annodb))
   regions.annotated$region_coord <- names(regions.range)
 
   topic.regions <- lapply(seq(nrow(terms.mat)), function(clst){
