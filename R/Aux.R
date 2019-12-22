@@ -1,5 +1,8 @@
-GrepAndWriteMat <- function(mat.tmp, jgrp, jgrp.name, outf){
+GrepAndWriteMat <- function(mat.tmp, jgrp, jgrp.name, outf, invert=FALSE){
   cols.i <- grepl(jgrp, colnames(mat.tmp))
+  if (invert){
+    cols.i <- !cols.i
+  }
   mat.tmp.filt <- mat.tmp[, cols.i]
   assertthat::assert_that(ncol(mat.tmp.filt) > 0)
   print(jgrp.name)
