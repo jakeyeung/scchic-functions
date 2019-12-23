@@ -114,10 +114,30 @@ def main():
     with open(doctop_outf, mode="w") as wf:
         writer = csv.writer(wf, delimiter = "\t")
         for d in all_topics:
-            # each d is a list of tuples of (topic_id, topic_weight)
-            outrow = [i[1] for i in d]
+            # document list length is not necessarily num_topics
+            topic_i = 0  # track topics
+            outrow = []
+            for tup in d:
+                topic, weight = tup[0], tup[1]
+                assert topic_i <= topic  # otherwise something is wrong!
+                while topic > topic_i:  # means we skipped some zero-weight topics
+                    outrow.append(0)
+                    topic_i += 1
+                if topic == topic_i:
+                    outrow.append(weight)
+                    topic_i += 1
+            while topic_i < lda.num_topics:
+                outrow.append(0)
+                topic_i += 1
+            assert len(outrow) == lda.num_topics
             assert(abs(sum(outrow) - 1) < 0.00001)  # check things sum up to ~1
             writer.writerow(outrow)
+
+        # for d in all_topics:
+        #     # each d is a list of tuples of (topic_id, topic_weight)
+        #     outrow = [i[1] for i in d]
+        #     assert(abs(sum(outrow) - 1) < 0.00001)  # check things sum up to ~1
+        #     writer.writerow(outrow)
 
 if __name__ == '__main__':
     main()
