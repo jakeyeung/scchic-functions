@@ -9,3 +9,15 @@ Description: More about what it does (maybe more than one line)
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
+Imports: 
+    ggplot2,
+    dplyr,
+    tidyr,
+    data.table,
+    Matrix,
+    jclustering,
+    leidenbase,
+    JFuncs,
+    hash,
+    igraph,
+    umap
