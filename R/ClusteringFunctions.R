@@ -1,4 +1,4 @@
-DoLouvain <- function(topics.mat, custom.settings.louv, dat.umap.long = NULL){
+DoLouvain <- function(topics.mat, custom.settings.louv, dat.umap.long = NULL, clstr.cname = "louvain"){
   # Do Louvain for clustering
   dat.umap.louv <- umap(topics.mat, config = custom.settings.louv)
   dat.umap.louv.long <- data.frame(umap1 = dat.umap.louv$layout[, 1], umap2 = dat.umap.louv$layout[, 2], cell = rownames(dat.umap.louv$layout),
@@ -21,7 +21,8 @@ DoLouvain <- function(topics.mat, custom.settings.louv, dat.umap.long = NULL){
   V(g)$color <- g.out$membership
   clstr <- hash(g.out$names, g.out$membership)
   if (is.data.frame(dat.umap.long)){
-    dat.umap.long$louvain <- as.character(sapply(dat.umap.long$cell, function(x) clstr[[as.character(x)]]))
+    # dat.umap.long$louvain <- as.character(sapply(dat.umap.long$cell, function(x) clstr[[as.character(x)]]))
+    dat.umap.long[[clstr.cname]] <- as.character(sapply(dat.umap.long$cell, function(x) clstr[[as.character(x)]]))
   } else {
     dat.umap.long <- clstr
   }
