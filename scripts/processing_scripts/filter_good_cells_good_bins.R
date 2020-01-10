@@ -31,13 +31,14 @@ parser$add_argument('-names', metavar="space delim strings", nargs = "+",
                                             help='Label for each infile')
 parser$add_argument('-outdir', metavar='OUTDIR',
                                             help='outdir')
-parser$add_argument('-countcutoff', metavar='INTEGER', type = 'integer', 
+parser$add_argument('-countcutoff', metavar='INTEGER', type = 'integer', nargs = "+", 
                                             help='Minimum counts')
 parser$add_argument('-TAcutoff', metavar='TAcutoff', type = 'character',
                                             help='Minimum TA fraction')
 parser$add_argument('-blfile', metavar='BEDFILE',
                                             help='List of blacklist regons to exclude')
 parser$add_argument('--overwrite', action="store_true", default=FALSE, help="Force overwrite")
+parser$add_argument('--donotfilterbl', action="store_true", default=FALSE, help="Skip blacklist flitering")
 parser$add_argument("--verbose", action="store_true", default=TRUE,
                         help="Print extra output [default]")
 
@@ -48,9 +49,19 @@ args <- parser$parse_args()
 
 print(args)
 
+print(args$names)
+print(args$countcutoff)
+
 # check files
 assertthat::assert_that(length(args$infilerz) == length(args$infilecounts))
 assertthat::assert_that(length(args$names) == length(args$infilecounts))
+assertthat::assert_that(length(args$countcutoff) == 1 | length(args$countcutoff) == length(args$names), msg=paste("args$countcutoff length incompatible with args$names"))
+
+# handles both length 1 or multillength 
+cutoff.counts.hash <- hash::hash(args$names, args$countcutoff)
+
+print("making count hash:")
+print(cutoff.counts.hash)
 
 # print some progress messages to stderr if "quietly" wasn't requested
 if ( args$verbose ) { 
@@ -58,9 +69,10 @@ if ( args$verbose ) {
     print(args)
 }
 
+print("Starting time")
 jstart <- Sys.time()
 
-
+library(hash)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -100,22 +112,32 @@ infs.mat <- as.list(args$infilecounts)
 #              file.path(indir, "BM-B6-H3K27me3_with_dblexperi.2019-12-23.mq_40.bsize_100000.step_20000.csv.gz"),
 #              file.path(indir, "BM-B6-K4m1-K27m3-191008-merged.mq_40.bsize_100000.step_20000.csv.gz"))
 
-lapply(infs.rz, function(x) assertthat::assert_that(file.exists(x)))
-lapply(infs.mat, function(x) assertthat::assert_that(file.exists(x)))
+lapply(infs.rz, function(x) assertthat::assert_that(file.exists(x), msg=paste("infrz not found", x)))
+lapply(infs.mat, function(x) assertthat::assert_that(file.exists(x), msg=paste("infmat not found", x)))
 
 # jnames <- c("H3K4me1", "H3K27me3", "H3K4me1_H3K27me3")
 jnames <- args$names
 names(jnames) <- jnames
 
+names(infs.rz) <- jnames
+names(infs.mat) <- jnames
+
 outdir <- args$outdir
 
+
 outpaths <- lapply(jnames, function(jname){
-  jout <- file.path(outdir, paste0("count_mat.",jname, ".countcutoff_", cutoff.counts, ".TAcutoff_", cutoff.TA, ".rds"))
+  jout <- file.path(outdir, paste0("count_mat.",jname, ".countcutoff_", paste(cutoff.counts, collapse="-"), ".TAcutoff_", cutoff.TA, ".rds"))
   if (!overwrite){
     assertthat::assert_that(!file.exists(jout), msg = paste("Outfile exists, not overwriting for safety:", jout))
   }
   return(jout)
 })
+
+outbases <- lapply(jnames, function(jname){
+  jout <- file.path(outdir, paste0("count_mat.",jname, ".countcutoff_", paste(cutoff.counts, collapse="-"), ".TAcutoff_", cutoff.TA))  # add extetnsion later 
+  return(jout)
+})
+
 pdfout <- file.path(outdir, paste0("qc_plots.", paste(jnames, collapse = "-"), ".pdf"))
 if (!overwrite){
   assertthat::assert_that(!file.exists(pdfout), msg = paste("Pdfout exists, not overwriting for safety:", pdfout))
@@ -148,7 +170,7 @@ empty.wells <- GetEmptyWells()
 dat.rz.filt <- dat.rz.filt %>%
   rowwise() %>%
   mutate(empty.well = cellindx %in% empty.wells, 
-         good.cell = total.count > cutoff.counts & TA.frac > cutoff.TA & !empty.well)
+         good.cell = total.count > cutoff.counts.hash[[mark]] & TA.frac > cutoff.TA & !empty.well)
 
 
 m.density.bymark <- ggplot(dat.rz.filt, aes(x = total.count, fill = mark)) + geom_density(alpha = 0.3)  + 
@@ -194,15 +216,19 @@ mats <- lapply(infs.mat, function(inf){
   mat.filt <- mat[, cols.i]
 })
 
-# remove blacklist
-print("Before removing blacklist")
-print(lapply(mats, dim))
-mats <- lapply(mats, function(mat){
-  rnames.filt <- FilterBinsByBlacklist(rownames(mat), blfile = blfile)
-  rows.i <- rownames(mat) %in% rnames.filt
-  mat.filt <- mat[rows.i, ]
-})
-print("After removing blacklist")
+if (!args$donotfilterbl){
+  # remove blacklist
+  print("Before removing blacklist")
+  print(lapply(mats, dim))
+  mats <- lapply(mats, function(mat){
+    rnames.filt <- FilterBinsByBlacklist(rownames(mat), blfile = blfile)
+    rows.i <- rownames(mat) %in% rnames.filt
+    mat.filt <- mat[rows.i, ]
+  })
+  print("After removing blacklist")
+} else {
+  print("Do not filter blacklist flag on, skipping blacklist filtering...")
+}
 print(lapply(mats, dim))
 
 # save each mat separately 
@@ -211,5 +237,8 @@ for (jname in jnames){
   jtmp <- mats[[jname]]
   assertthat::assert_that(nrow(jtmp) > 0 & ncol(jtmp) > 0)
   saveRDS(jtmp, file = outpath)
+  writeMM(jtmp, sparse = TRUE, file = paste0(outbases[[jname]], ".mm"))
+  write.table(rownames(jtmp), file = paste0(outbases[[jname]], ".rownames"), sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)
+  write.table(colnames(jtmp), file = paste0(outbases[[jname]], ".colnames"), sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)
 }
 
