@@ -20,4 +20,5 @@ Imports:
     JFuncs,
     hash,
     igraph,
-    umap
+    umap,
+    topicmodels
