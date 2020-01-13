@@ -67,6 +67,7 @@ def main():
     parser.add_argument('--annot_no_colnames', action='store_true', help='Set if annot has no column name')
     parser.add_argument('-mapq', metavar="MAPQ value", required=True, default=40, type=int)
     parser.add_argument('--add_chr_prefix', action='store_true', help="Add chr prefix to chromosome name")
+    parser.add_argument('--overwrite', action='store_true', help="Does not check if bam files exists, will just write to file")
     parser.add_argument('--quiet', '-q', action='store_true',
                         help='Suppress some print statements')
     parser.add_argument('-logfile', '-l', metavar='LOGFILE', default = None,
@@ -100,6 +101,7 @@ def main():
     writebamdic = {}  # bam write objs
     sorteddic={}  # output files for sorted bam files
     unsorteddic={}  # tmp files unsorted, will be deleted afterwards
+    
 
     # # get sampnames_all by reading the bam file
     # sampnames_all = scan_bam_get_sampnames(args.infile, tag = samp_tag_id)  # sampnames_all are sample names
@@ -133,6 +135,14 @@ def main():
     # for samp in samps_good:
     #     assert samp in sampnames_all
     # print("Checking samps are found in bam... DONE")
+
+    # check that no output bam files will clash with existing bams, exit if no overwrite ooption 
+    if not args.overwrite:
+        for clstr in clstrs:
+            checktmppath = os.path.join(args.outdir, '.'.join([bname, clstr, "unsorted", "bam"]))
+            checkoutpath = os.path.join(args.outdir, '.'.join([bname, clstr, "sorted", "bam"]))
+            assert not os.path.exists(checktmppath)
+            assert not os.path.exists(checkoutpath)
 
     dup_count = 0
     assign_count = 0
