@@ -1,3 +1,24 @@
+SumAcrossChromos <- function(count.mat, jchromos, colfunction = mean){
+  names(jchromos) <- jchromos
+  rows.i.lst <- lapply(jchromos, function(jchromo){
+    terms.keep <- grep(jchromo, rownames(count.mat))
+  })
+  mat.sum.by.chromo.merged <- lapply(rows.i.lst, function(terms.keep){
+    return(apply(count.mat[terms.keep, ], MARGIN = 2, colfunction))
+  })
+  mat.sum.by.chromo.merged <- do.call(rbind, mat.sum.by.chromo.merged)
+  jcells <- colnames(count.mat)
+  names(jcells) <- jcells
+  reads.by.chromo <- lapply(jcells, function(jcell){
+    reads.by.chromo <- mat.sum.by.chromo.merged[, jcell]
+    reads.by.chromo.dat <- data.frame(chromo = names(reads.by.chromo), ncuts = unlist(reads.by.chromo), stringsAsFactors = FALSE) %>%
+      mutate(cell = jcell)
+    return(reads.by.chromo.dat)
+  }) %>% 
+    bind_rows()
+  return(reads.by.chromo)
+}
+
 GrepAndWriteMat <- function(mat.tmp, jgrp, jgrp.name, outf, invert=FALSE, save.rds = TRUE){
   cols.i <- grepl(jgrp, colnames(mat.tmp))
   if (invert){
