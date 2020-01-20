@@ -15,7 +15,6 @@ Imports:
     tidyr,
     data.table,
     Matrix,
-    jclustering,
     leidenbase,
     JFuncs,
     hash,
