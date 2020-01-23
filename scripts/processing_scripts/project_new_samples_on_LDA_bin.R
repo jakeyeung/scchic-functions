@@ -75,7 +75,7 @@ if (endsWith(args$inmat, ".rds")){
     load(args$inmat, v=T)  # count.dat$counts
 }
 
-assertthat::assert_that(class(count.dat$counts) == "dgCMatrix")
+assertthat::assert_that(class(count.dat$counts) == "dgCMatrix" | class(count.dat$counts) == "matrix")
 
 if (args$binarizemat){
   print(paste('Max count before binarizing', max(count.dat$counts)))
