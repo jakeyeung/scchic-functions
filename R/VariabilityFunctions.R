@@ -1,3 +1,22 @@
+CalculateVarRaw <- function(count.mat, merge.size = 1000, chromo.exclude.grep = "^chrX|^chrY", jpseudocount = 1, jscale = 10^6, calculate.ncuts = TRUE){
+  if (calculate.ncuts){
+    ncuts.dat <- data.frame(cell = colnames(count.mat), ncuts = colSums(count.mat), stringsAsFactors = FALSE)
+  }
+  count.mat.filt <- sweep(count.mat, MARGIN = 2, STATS = colSums(count.mat), FUN = "/")
+  count.mat.filt.autosome <- count.mat.filt[!grepl(chromo.exclude.grep, rownames(count.mat.filt)), ]
+  bins.all <- rownames(count.mat.filt.autosome)
+  bin.name <- paste("chr", ceiling(seq(length(bins.all)) / merge.size), sep = "_")
+  jchromos.bin <- unique(bin.name)
+  bin.newname <- paste(bin.name, seq(length(bin.name)), sep = ":")
+  rownames(count.mat.filt.autosome) <- bin.newname
+  dat.sum.bigbins <- SumAcrossChromos(count.mat = count.mat.filt.autosome, jchromos.bin, mean)
+  dat.sum.bigbins.var <- dat.sum.bigbins %>%
+    group_by(cell) %>%
+    summarise(ncuts.var = var(log2(ncuts * jscale + jpseudocount))) %>%
+    left_join(., ncuts.dat)
+  return(dat.sum.bigbins.var)
+}
+
 CalculateVarAll <- function(dat.impute.log, jchromos){
   cells.var.chromo.within.sum <- CalculateVarWithinChromo(dat.impute.log = dat.impute.log, jchromos = jchromos)
   cells.var.chromo.across <- CalculateVarAcrossChromo(dat.mat.log = dat.impute.log, jchromos = jchromos)

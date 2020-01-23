@@ -22,7 +22,12 @@ DoLouvain <- function(topics.mat, custom.settings.louv, dat.umap.long = NULL, cl
   clstr <- hash(g.out$names, g.out$membership)
   if (is.data.frame(dat.umap.long)){
     # dat.umap.long$louvain <- as.character(sapply(dat.umap.long$cell, function(x) clstr[[as.character(x)]]))
-    dat.umap.long[[clstr.cname]] <- as.character(sapply(dat.umap.long$cell, function(x) clstr[[as.character(x)]]))
+    if (clstr.cname == "louvain"){
+      dat.umap.long[[clstr.cname]] <- as.character(sapply(dat.umap.long$cell, function(x) clstr[[as.character(x)]]))
+    } else {
+      #add louvain prefix
+      dat.umap.long[[clstr.cname]] <- as.character(sapply(dat.umap.long$cell, function(x) paste0("louvain_", clstr[[as.character(x)]])))
+    }
   } else {
     dat.umap.long <- clstr
   }

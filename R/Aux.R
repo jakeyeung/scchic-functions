@@ -1,3 +1,24 @@
+SumAcrossChromos <- function(count.mat, jchromos, colfunction = mean){
+  names(jchromos) <- jchromos
+  rows.i.lst <- lapply(jchromos, function(jchromo){
+    terms.keep <- grep(paste0("^", jchromo, ":"), rownames(count.mat))
+  })
+  mat.sum.by.chromo.merged <- lapply(rows.i.lst, function(terms.keep){
+    return(apply(count.mat[terms.keep, ], MARGIN = 2, colfunction))
+  })
+  mat.sum.by.chromo.merged <- do.call(rbind, mat.sum.by.chromo.merged)
+  jcells <- colnames(count.mat)
+  names(jcells) <- jcells
+  reads.by.chromo <- lapply(jcells, function(jcell){
+    reads.by.chromo <- mat.sum.by.chromo.merged[, jcell]
+    reads.by.chromo.dat <- data.frame(chromo = names(reads.by.chromo), ncuts = unlist(reads.by.chromo), stringsAsFactors = FALSE) %>%
+      mutate(cell = jcell)
+    return(reads.by.chromo.dat)
+  }) %>%
+    bind_rows()
+  return(reads.by.chromo)
+}
+
 GrepAndWriteMat <- function(mat.tmp, jgrp, jgrp.name, outf, invert=FALSE, save.rds = TRUE){
   cols.i <- grepl(jgrp, colnames(mat.tmp))
   if (invert){
@@ -65,10 +86,10 @@ Vectorize(AssignHash <- function(x, jhash, null.fill = NA){
 GetGOData <- function(out.tb.lst, ontology, jdecreasing=TRUE, order.by="Hyper_Fold_Enrichment"){
   topics <- which(lapply(1:length(out.tb.lst), function(i) !is.null(out.tb.lst[[i]][[ontology]])) == TRUE)
   GOdata <- lapply(topics, function(i) out.tb.lst[[i]][[ontology]])
-  GOdata <- lapply(1:length(GOdata), function(i) GOdata[[i]][order(GOdata[[i]][order.by], 
+  GOdata <- lapply(1:length(GOdata), function(i) GOdata[[i]][order(GOdata[[i]][order.by],
                                                                    decreasing = jdecreasing),])
   GOdata <- lapply(1:length(GOdata), function(i) GOdata[[i]][1:top,])
-  
+
   # annotate each GOdata by topic number
   for (i in topics){
     GOdata[[i]]$topic <- i
