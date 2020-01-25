@@ -88,5 +88,5 @@ system.time(
   out.lda.predict <- posterior(out.objs$out.lda, t(as.matrix(count.dat$counts)))
 )
 
-save(out.lda.predict, file = args$outfile)
+save(out.lda.predict, count.dat, file = args$outfile)
 
