@@ -83,10 +83,12 @@ if (args$binarizemat){
   print(paste('Max count after binarizing', max(count.dat$counts)))
 }
 
+count.mat.proj <- count.dat$counts
+
 print("Projecting new samples onto trained LDA")
 system.time(
   out.lda.predict <- posterior(out.objs$out.lda, t(as.matrix(count.dat$counts)))
 )
 
-save(out.lda.predict, count.dat, file = args$outfile)
+save(out.lda.predict, count.mat.proj, file = args$outfile)
 
