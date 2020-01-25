@@ -16,6 +16,15 @@
 #   return(mat.tmp.filt)
 # }
 
+LoadCellAnnots <- function(inf, annot){
+  # inf <- "/Users/yeung/data/dblchic/annotations_EtOH"
+  dat <- fread(inf, header = FALSE) %>%
+    dplyr::rename(cell = V1) %>%
+    mutate(celltype = annot) %>%
+    as.data.frame()
+  return(dat)
+}
+
 
 ReadMatTSSFormat <- function(inf, as.sparse = TRUE){
   dat <- fread(inf)[-1, ] %>%
