@@ -48,7 +48,7 @@ parser$add_argument('-inf_mark2_lda', metavar='PATH to RDATA or ROBJ', required 
                     help='mark2 LDA output path')
 parser$add_argument('-inf_dblmark_lda', metavar='PATH to RDATA or ROBJ', required = TRUE,
                     help='Double mark LDA output path')
-parser$add_argument('-outprefix', metavar='OUTFILE',
+parser$add_argument('-outprefix', metavar='OUTFILE', required = TRUE,
                     help='Prefix to write .RData and .pdf')
 
 
@@ -122,7 +122,7 @@ outpdf.pairs <- paste0(outprefix, "-plots_pairs.pdf")
 # outputs for splitting reds 
 outpdf.split <- paste0(outprefix, "-plots_WithUnmixing.pdf")
 outf.unmixing <- paste0(outprefix, "-raw_unmixed.RData")
-outf.unmixing.probs.mat <- paste0(outprefix, "-prob_mat.", jmark.dbl.dash, "_to_", jmark, ".RData")
+outf.unmixing.probs.mat <- paste0(outprefix, "-prob_mat.", jmark.dbl.dash, "_to_", jmark, ".txt")
 
 outf.mergedmat.act <- paste0(outprefix, "-merged_mat.", jmark, ".rds")
 outf.mergedmat.repress <- paste0(outprefix, "-merged_mat.", jmark2, ".rds")
