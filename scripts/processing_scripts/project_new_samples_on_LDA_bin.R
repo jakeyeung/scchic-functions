@@ -90,5 +90,5 @@ system.time(
   out.lda.predict <- posterior(out.objs$out.lda, t(as.matrix(count.dat$counts)))
 )
 
-save(out.lda.predict, count.mat.proj, file = args$outfile)
+save(out.lda.predict, count.mat.proj, out.objs, file = args$outfile)
 
