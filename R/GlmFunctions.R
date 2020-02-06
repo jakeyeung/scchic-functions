@@ -5,6 +5,67 @@
 # https://github.com/willtownes/scrna2019/blob/master/util/functions.R
 
 
+InitGLMPCAfromLDA <- function(count.mat, tm.result, dat.var.merge, covar.cname = "ncuts.var", bins.keep = 100, do.log = FALSE, svd.on.Yinit = TRUE, use.orig.sz = TRUE){
+  
+  ntopics <- ncol(tm.result$topics)
+  Y <- count.mat
+  
+  if (use.orig.sz){
+    size.factor <- colSums(Y)
+  } else {
+    size.factor <- NULL
+  }
+  
+  # print("Size factor:")
+  # print(head(size.factor))
+  
+  assertthat::assert_that(all(rownames(Y) == colnames(tm.result$terms)))
+  
+  # keep variable bins
+  bins.high.i <- as.data.frame(apply(tm.result$terms, MARGIN = 1, function(jcol) order(jcol, decreasing = TRUE)[1:bins.keep])) %>%
+    unlist()
+  
+  bins.high <- unique(rownames(Y)[bins.high.i])
+  
+  Y.filt <- Y[bins.high, ]
+  
+  var.vec <- dat.var.merge[[covar.cname]]
+  names(var.vec) <- dat.var.merge$cell
+  
+  X <- data.frame(ncuts.var = var.vec, cell = names(var.vec))  # columns of 1s are implicit
+  X.reorder <- X[match(colnames(Y.filt), X$cell), ]
+  X.mat <- matrix(data = X.reorder[[covar.cname]], ncol = 1, byrow = TRUE, dimnames = list(X.reorder$cell, covar.cname))
+  
+  # factors (U) is c by k
+  # loadings (V) is g by k
+  if (do.log){
+    topics.mat <- log2(tm.result$topics)
+    terms.mat <- log2(tm.result$terms[, bins.high])
+  } else {
+    topics.mat <- tm.result$topics
+    terms.mat <- tm.result$terms[, bins.high]
+  }
+  
+  if (svd.on.Yinit){
+    # GLM loglink function for multinom is log( p / (1 - p) )
+    # V %*% t(U) on init matrix gives an estimate of p
+    # after estimate p / (1 - p), THEN remove mean and finally do SVD to get factors and loadings estimate
+    p <- t(terms.mat) %*% t(topics.mat)
+    logodds <- log(p / (1 - p))
+    # remove mean and SVD
+    logodds.centered <- t(scale(t(logodds), center = TRUE, scale = FALSE))
+    # logodds.centered.check <- sweep(logodds, MARGIN = 1, STATS = rowMeans(logodds), FUN = "-")
+    logodds.pca <- prcomp(t(logodds.centered), center = FALSE, scale. = FALSE, rank. = ntopics)
+    U.init <- logodds.pca$x  # cells by k
+    V.init <- logodds.pca$rotation  # genes by k, no need to transpose
+  } else {
+    U.init <- scale(topics.mat, center = TRUE, scale = FALSE)  # c by k
+    V.init <- scale(terms.mat, center = TRUE, scale = FALSE)  # k by g
+    V.init <- t(V.init)  # now its g by k
+  }
+  return(list(Y.filt = Y.filt, U.init = U.init, V.init = V.init, X.mat = X.mat, size.factor = size.factor, ntopics = ntopics))
+}
+
 ##### Deviance functions #####
 
 poisson_deviance<-function(x,mu,sz){
