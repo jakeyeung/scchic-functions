@@ -56,12 +56,6 @@ parser$add_argument('-outprefix', metavar='OUTFILE', required = TRUE,
 # otherwise if options not found on command line then set defaults,
 args <- parser$parse_args()
 
-# print some progress messages to stderr if "quietly" wasn't requested
-if ( args$verbose ) {
-  print("Arguments:")
-  print(args)
-}
-
 
 # Set constants -----------------------------------------------------------
 
