@@ -475,8 +475,9 @@ mat.probs <- as.data.frame(lapply(x.raw.unmixed, function(sublst) sublst$p.cell.
 # fix column names 
 colnames(mat.probs) <- gsub("\\.", "-", colnames(mat.probs))
 fwrite(mat.probs, file = outf.unmixing.probs.mat, sep = "\t", row.names = TRUE)
-jcmd <- paste("gzip", outf.unmixing.probs.mat)
-system(command = jcmd)
+
+# jcmd <- paste("gzip", outf.unmixing.probs.mat)
+# system(command = jcmd)
 
 # View downstream ---------------------------------------------------------
 
