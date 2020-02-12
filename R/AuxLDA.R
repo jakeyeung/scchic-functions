@@ -3,6 +3,7 @@
 # File: ~/projects/scchicFuncs/R/AuxLDA.R
 #
 
+
 AnnotateBins2 <- function(terms.mat, top.thres=0.995, inf.tss="/Users/yeung/data/scchic/tables/gene_tss_winsize.50000.bed", txdb = TxDb.Mmusculus.UCSC.mm10.knowngene, annodb = "org.Mm.eg.db", chromos.keep=c(paste("chr", seq(19), sep = ""), "chrX", "chrY")){
   assertthat::assert_that(file.exists(inf.tss))
   assertthat::assert_that(class(terms.mat) == "matrix")
