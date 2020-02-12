@@ -402,7 +402,7 @@ if (any(is.na(dat.umap.dbl$w))){
 } else {
   print("No NAs detected in double marks, keeping all cells")
   dat.umap.dbl.annot <-dat.umap.dbl
-  print(paste("Nubmer of cells in double mat:"), nrow(dat.umap.dbl.annot))
+  print(paste("Nubmer of cells in double mat:", nrow(dat.umap.dbl.annot)))
 }
 
 # factor as alphabetical?
@@ -453,8 +453,8 @@ system.time(
 )
 save(x.raw.unmixed, file = outf.unmixing)
 
-hist(x.raw.unmixed[[1]]$p.cell.active.weights, col = 'red', main = paste0("Unmixing ", jmark.dbl.lda, " to ", jmark, "\n", all.cells[[1]]), xlab = paste0("Probability of Bin Assigned to ", jmark))
-hist(x.raw.unmixed[[2]]$p.cell.active.weights, col = 'red', main = paste0("Unmixing ", jmark.dbl.lda, " to ", jmark, "\n", all.cells[[2]]), xlab = paste0("Probability of Bin Assigned to ", jmark))
+hist(x.raw.unmixed[[1]]$p.cell.active.weights, col = 'red', main = paste0("Unmixing ", jmark.dbl, " to ", jmark, "\n", all.cells[[1]]), xlab = paste0("Probability of Bin Assigned to ", jmark))
+hist(x.raw.unmixed[[2]]$p.cell.active.weights, col = 'red', main = paste0("Unmixing ", jmark.dbl, " to ", jmark, "\n", all.cells[[2]]), xlab = paste0("Probability of Bin Assigned to ", jmark))
 
 # genomewide?
 p.all <- unlist(lapply(x.raw.unmixed, function(sublst) sublst$p.cell.active.weights))
@@ -556,7 +556,7 @@ ggplot(dat.umap.long.lsi.repress.merge, aes(x = umap1, y = umap2, color = louvai
 
 cells.random <- sample(all.cells, size = 10)
 for (cell in cells.random){
-  hist(x.raw.unmixed[[cell]]$p.cell.active.weights, col = 'red', main = paste0("Unmixing ", jmark.dbl.lda, " to ", jmark, "\n", cells.random[[cell]]), xlab = paste0("Probability of Bin Assigned to ", jmark))
+  hist(x.raw.unmixed[[cell]]$p.cell.active.weights, col = 'red', main = paste0("Unmixing ", jmark.dbl, " to ", jmark, "\n", cells.random[[cell]]), xlab = paste0("Probability of Bin Assigned to ", jmark))
 }
 
 dev.off()
