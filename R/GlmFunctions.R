@@ -32,9 +32,9 @@ InitGLMPCAfromLDA <- function(count.mat, tm.result, dat.var.merge, covar.cname =
   var.vec <- dat.var.merge[[covar.cname]]
   names(var.vec) <- dat.var.merge$cell
   
-  X <- data.frame(ncuts.var = var.vec, cell = names(var.vec))  # columns of 1s are implicit
+  X <- data.frame(covariate = var.vec, cell = names(var.vec))  # columns of 1s are implicit
   X.reorder <- X[match(colnames(Y.filt), X$cell), ]
-  X.mat <- matrix(data = X.reorder[[covar.cname]], ncol = 1, byrow = TRUE, dimnames = list(X.reorder$cell, covar.cname))
+  X.mat <- matrix(data = X.reorder$covariate, ncol = 1, byrow = TRUE, dimnames = list(X.reorder$cell, covar.cname))
   
   # factors (U) is c by k
   # loadings (V) is g by k
