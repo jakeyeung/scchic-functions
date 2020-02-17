@@ -1,3 +1,45 @@
+GetCondFromSamp <- function(samp, mark = "H2K4me1"){
+  if (mark == "H3K4me1"){
+    wt.plates <- c("B6-13W1-BM-H3K4me1", "PZ-ChIC-Bl6-BM-H3K4me1-Index")
+    linneg.plates <- c("PZ-ChIC-Bl6-BM-lin-H3K4me1-")
+    hsc.plates <- c("-stem-cells-")
+  } else if (mark == "H3K4me3"){
+    wt.plates <- c("B6-13W1-BM-H3K4me3")
+    linneg.plates <- c("-Linneg-")
+    hsc.plates <- c("-B6BMSC-")
+  } else if (mark == "H3K27me3") {
+    wt.plates <- c("B6-13W1-BM-")
+    linneg.plates <- c("-Linneg-")
+    hsc.plates <- c("-B6BMSC-")
+  } else if (mark == "H3K9me3") {
+    wt.plates <- c("B6-13W1-BM-")
+    linneg.plates <- c("-Linneg-")
+    hsc.plates <- c("BMSC-")
+  } else {
+    print(paste(mark, "not yet coded"))
+  }
+  wt.plates.grep <- paste(wt.plates, collapse = "|")
+  linneg.plates.grep <- paste(linneg.plates, collapse = "|")
+  hsc.plates.grep <- paste(hsc.plates, collapse = "|")
+  is.wt <- grepl(wt.plates.grep, samp)
+  is.linneg <- grepl(linneg.plates.grep, samp)
+  is.hsc <- grepl(hsc.plates.grep, samp)
+  bool.vec <- c(is.wt, is.linneg, is.hsc)
+  assertthat::assert_that(sum(bool.vec) == 1)
+  
+  indx <- which.max(bool.vec)
+  if (indx == 1){
+    cond <- "Unenriched"
+  } else if (indx == 2){
+    cond <- "Linneg"
+  } else if (indx == 3){
+    cond <- "StemCell"
+  } else {
+    stop("must be 1, 2, or 3. Found: ", indx)
+  }
+}
+
+
 SumAcrossChromos <- function(count.mat, jchromos, colfunction = mean){
   names(jchromos) <- jchromos
   rows.i.lst <- lapply(jchromos, function(jchromo){
