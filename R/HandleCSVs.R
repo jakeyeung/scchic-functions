@@ -39,7 +39,7 @@ LoadCellAnnots <- function(inf, annot){
 }
 
 
-ReadMatTSSFormat <- function(inf, as.sparse = TRUE){
+ReadMatTSSFormat <- function(inf, as.sparse = TRUE, add.coord = FALSE){
   dat <- fread(inf)[-1, ] %>%
     dplyr::rename(chromo = sampleName,
                   start = V2,
@@ -49,6 +49,11 @@ ReadMatTSSFormat <- function(inf, as.sparse = TRUE){
   dat <- subset(dat, start != "Missing" & end != "Missing")
   # dat$coord <- dat$V4
   # dat$coord <- paste(dat$chromo, dat$startend, sep = ":")
+  if (add.coord){
+      coord2 <- paste(dat$chromo, paste(dat$start, dat$end, sep = "-"), sep = ":")
+      dat$coord <- paste(coord2, dat$coord, sep = ";")
+  }
+
   dat$chromo <- NULL
   dat$start <- NULL
   dat$end <- NULL
