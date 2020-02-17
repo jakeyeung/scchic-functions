@@ -3,6 +3,8 @@ FitMixtureModelLabelCells <-function(topics.mat, topics.keep, jthres = 0.5, show
   # dat.umap.long requires columns umap1, umap2 and cell name for plotting mixturre fitting output on umap
   assertthat::assert_that(all(topics.keep %in% colnames(topics.mat)))
   
+  mm.failed <- FALSE
+  
   if (is.null(names(topics.keep))){
     names(topics.keep) <- topics.keep
   }
@@ -20,11 +22,13 @@ FitMixtureModelLabelCells <-function(topics.mat, topics.keep, jthres = 0.5, show
     xcells <- names(tvec)[which(tvec > xline)]
     print(paste(length(xcells), "/", length(tvec), "assigned to", jtopic))
     if (length(xcells) / length(tvec) >= fail.if.nfrac){
+      mm.failed <- TRUE
       print(paste0("MM failed: too many cells assigned in mixture model, resorting to taking top: ", quantile.if.fail))
       xcells <- names(tvec)[which(tvec > quantile(tvec, quantile.if.fail))]
       print(paste("Manual threshold:", length(xcells), "/", length(tvec), "assigned to", jtopic))
     }
     if (length(xcells) == 0){
+      mm.failed <- TRUE
       print(paste0("No cells assigned, resorting to taking top: ", quantile.if.fail))
       xcells <- names(tvec)[which(tvec > quantile(tvec, quantile.if.fail))]
       print(paste("Manual threshold:", length(xcells), "/", length(tvec), "assigned to", jtopic))
@@ -33,20 +37,21 @@ FitMixtureModelLabelCells <-function(topics.mat, topics.keep, jthres = 0.5, show
     tvec.raw.filt <- tvec.raw[xcells]
     
     # xline <- max(mm$x[indx.btwn][which(post.filt[, 2] > 0.5)])
+    jtitle <- paste(jtopic, paste0("thres_", jthres), paste0("mmFailed_", mm.failed), paste0(length(xcells), "/", length(tvec)))
     if (show.plots){
-      plot(density(tvec), main = paste(jtopic, jthres), xlab = "Log Odds [log(p / (1 - p))]")
+      plot(density(tvec), main = jtitle, xlab = "Log Odds [log(p / (1 - p))]")
       abline(v = xline, col = 'blue')
-      plot.mixEM(mm, whichplots = 2, xlab2 = "Log Odds [log(p / (1 - p))]", main2 = paste(jtopic, jthres))
+      plot.mixEM(mm, whichplots = 2, xlab2 = "Log Odds [log(p / (1 - p))]", main2 = jtitle)
       abline(v = xline, col = 'blue')
     }
     
     cells.keep <- xcells
     if (show.plots){
-      m.check <- PlotXYWithColor(dat.umap.long %>% mutate(is.celltype = cell %in% cells.keep), xvar = "umap1", yvar = "umap2", cname = "is.celltype", jtitle = paste(jtopic, jthres), cont.color = FALSE, col.palette = cbPalette)
+      m.check <- PlotXYWithColor(dat.umap.long %>% mutate(is.celltype = cell %in% cells.keep), xvar = "umap1", yvar = "umap2", cname = "is.celltype", jtitle = jtitle, cont.color = FALSE, col.palette = cbPalette)
       print(m.check)
     }
     
-    return(list(topic = jtopic, topic.weight = tvec.raw.filt, celltype = xcells, mm = mm, threshold = xline))
+    return(list(topic = jtopic, topic.weight = tvec.raw.filt, celltype = xcells, mm = mm, threshold = xline, mm.failed = mm.failed))
   })
 }
 
