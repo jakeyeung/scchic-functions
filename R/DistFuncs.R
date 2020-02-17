@@ -5,7 +5,7 @@
 
 HellingerDistance <- function(x, y){
   # https://en.wikipedia.org/wiki/Hellinger_distance
-  d <- 1 / sqrt(2) * sqrt( (sqrt(x) - sqrt(y)) ^ 2 )
+  d <- 1 / sqrt(2) * sqrt( sum ( (sqrt(x) - sqrt(y)) ^ 2 ) )
   return(d)
 }
 
