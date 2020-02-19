@@ -3,8 +3,68 @@
 # File: ~/projects/scchicFuncs/R/AuxLDA.R
 #
 
+AnnotateCoordsFromList <- function(coords.vec,
+                                   inf.tss="/Users/yeung/data/scchic/tables/gene_tss_winsize.50000.bed",
+                                   txdb = TxDb.Mmusculus.UCSC.mm10.knownGene,
+                                   annodb = "org.Mm.eg.db",
+                                   chromos.keep=c(paste("chr", seq(19), sep = ""), "chrX", "chrY")){
+  # library(TxDb.Mmusculus.UCSC.mm10.knownGene)
+  # library(org.Mm.eg.db)
+  library(ChIPseeker)
+  assertthat::assert_that(file.exists(inf.tss))
+  regions <- data.frame(seqnames = sapply(coords.vec, GetChromo),
+                        start = sapply(coords.vec, GetStart),
+                        end = sapply(coords.vec, GetEnd),
+                        stringsAsFactors = FALSE)
+  rownames(regions) <- coords.vec
+  # regions <- subset(regions, !seqnames %in% c("chr20", "chr21"))
+  print("Chromos to keep")
+  print(chromos.keep)
+  regions <- subset(regions, seqnames %in% chromos.keep)
 
-AnnotateBins2 <- function(terms.mat, top.thres=0.995, inf.tss="/Users/yeung/data/scchic/tables/gene_tss_winsize.50000.bed", txdb = TxDb.Mmusculus.UCSC.mm10.knowngene, annodb = "org.Mm.eg.db", chromos.keep=c(paste("chr", seq(19), sep = ""), "chrX", "chrY")){
+  regions.range <- makeGRangesFromDataFrame(as.data.frame(regions))
+  regions.annotated <- as.data.frame(annotatePeak(regions.range,
+                                                  # TxDb=TxDb.Mmusculus.UCSC.mm10.knownGene,
+                                                  TxDb=txdb,
+                                                  # annoDb='org.Mm.eg.db'))
+                                                  annoDb=annodb))
+  regions.annotated$region_coord <- names(regions.range)
+
+  tss.dat <- fread(inf.tss, col.names = c("seqnames", "start", "end", "tssname"))
+  tss.dat$gene <- sapply(tss.dat$tssname, function(x) strsplit(x, ";")[[1]][[2]])
+
+  annots.biomart <- regions.annotated %>%
+    mutate(midpt = start + (end - start) / 2)
+
+  annots.gr <- makeGRangesFromDataFrame(annots.biomart %>% dplyr::select(seqnames, start, end, SYMBOL, region_coord), keep.extra.columns = TRUE)
+  annots.tss.gr <- makeGRangesFromDataFrame(tss.dat, keep.extra.columns = TRUE)
+
+  out <- findOverlaps(annots.tss.gr, annots.gr, type = "within")
+  out2 <- findOverlaps(annots.gr, annots.tss.gr, type = "any")
+
+  out2.df = data.frame(annots.gr[queryHits(out2),], annots.tss.gr[subjectHits(out2),]) %>%
+    mutate(midpt = start + round(width / 2),
+           midpt.1 = start.1 + round(width.1 / 2),
+           dist.to.tss = midpt.1 - midpt)
+
+  # filter closest
+  out2.df.closest <- out2.df %>%
+    group_by(region_coord) %>%
+    filter(abs(dist.to.tss) == min(abs(dist.to.tss)))
+
+  terms.new <- paste(out2.df.closest$region_coord, out2.df.closest$gene, sep = ";")
+  terms.hash <- hash::hash(out2.df.closest$region_coord, terms.new)
+
+  return(list('regions.annotated' = regions.annotated, 'out2.df.closest' = out2.df.closest))
+
+
+
+
+
+
+}
+
+AnnotateBins2 <- function(terms.mat, top.thres=0.995, inf.tss="/Users/yeung/data/scchic/tables/gene_tss_winsize.50000.bed", txdb = TxDb.Mmusculus.UCSC.mm10.knownGene, annodb = "org.Mm.eg.db", chromos.keep=c(paste("chr", seq(19), sep = ""), "chrX", "chrY")){
   assertthat::assert_that(file.exists(inf.tss))
   assertthat::assert_that(class(terms.mat) == "matrix")
   regions <- data.frame(seqnames = sapply(colnames(terms.mat), GetChromo),
@@ -68,7 +128,13 @@ AnnotateBins2 <- function(terms.mat, top.thres=0.995, inf.tss="/Users/yeung/data
 
   terms.annot <- terms.filt.top %>%
     mutate(termgene = ifelse(!is.null(terms.hash[[term]]), terms.hash[[term]], NA))
-  return(list('topic.regions' = topic.regions, 'regions.annotated' = regions.annotated, 'terms.annot' = terms.annot, 'out2.df.closest' = out2.df.closest))
+
+  terms.filt <- terms.filt.top %>%
+    mutate(termgene = ifelse(!is.null(terms.hash[[term]]), terms.hash[[term]], NA)) %>%
+    filter(!is.na(termgene)) %>%
+    mutate(gene = sapply(termgene, function(x) strsplit(x, ";")[[1]][[2]])) %>%
+    group_by(gene)  # dont filter use
+  return(list('topic.regions' = topic.regions, 'regions.annotated' = regions.annotated, 'terms.annot' = terms.annot, 'out2.df.closest' = out2.df.closest), 'terms.filt' = terms.filt)
 }
 
 DoUmapAndLouvain <- function(topics.mat, jsettings){
