@@ -18,7 +18,9 @@ dirname=$(basename $exprs_mat)
 dirname=${dirname%.*}
 outdir=$out/"$dirname"
 
-marascript="/home/hub_oudenaarden/jyeung/projects/from_PhD/ridge-regression/run_ridge_regression2.R"
+# marascript="/home/hub_oudenaarden/jyeung/projects/from_PhD/ridge-regression/run_ridge_regression2.R"
+marascript="/home/jyeung/projects/scchic-functions/scripts/motevo_scripts/lib/run_ridge_regression2.R"
+# marascript="/home/hub_oudenaarden/jyeung/projects/from_PhD/ridge-regression/run_ridge_regression2.R"
 
 [[ ! -e $marascript ]] && echo "$marascript not found, exiting" && exit 1
 [[ ! -d $outdir ]] && mkdir $outdir
