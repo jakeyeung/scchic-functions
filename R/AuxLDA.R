@@ -32,9 +32,9 @@ AnnotateCoordsFromList <- function(coords.vec,
 
   tss.dat <- fread(inf.tss, col.names = c("seqnames", "start", "end", "tssname"))
   tss.dat$gene <- sapply(tss.dat$tssname, function(x) strsplit(x, ";")[[1]][[2]])
+
   annots.biomart <- regions.annotated %>%
-    mutate(midpt = start + (end - start) / 2) %>%
-    filter(region_coord %in% terms.filt.top$term)
+    mutate(midpt = start + (end - start) / 2)
 
   annots.gr <- makeGRangesFromDataFrame(annots.biomart %>% dplyr::select(seqnames, start, end, SYMBOL, region_coord), keep.extra.columns = TRUE)
   annots.tss.gr <- makeGRangesFromDataFrame(tss.dat, keep.extra.columns = TRUE)
@@ -55,16 +55,7 @@ AnnotateCoordsFromList <- function(coords.vec,
   terms.new <- paste(out2.df.closest$region_coord, out2.df.closest$gene, sep = ";")
   terms.hash <- hash::hash(out2.df.closest$region_coord, terms.new)
 
-  terms.annot <- terms.filt.top %>%
-    mutate(termgene = ifelse(!is.null(terms.hash[[term]]), terms.hash[[term]], NA))
-
-  terms.filt <- terms.filt.top %>%
-    mutate(termgene = ifelse(!is.null(terms.hash[[term]]), terms.hash[[term]], NA)) %>%
-    filter(!is.na(termgene)) %>%
-    mutate(gene = sapply(termgene, function(x) strsplit(x, ";")[[1]][[2]])) %>%
-    group_by(gene)  # dont filter use
-
-  return(list('regions.annotated' = regions.annotated, 'terms.annot' = terms.annot, 'out2.df.closest' = out2.df.closest, 'terms.filt' = terms.filt))
+  return(list('regions.annotated' = regions.annotated, 'out2.df.closest' = out2.df.closest))
 
 
 
