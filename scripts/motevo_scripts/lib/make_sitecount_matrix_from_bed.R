@@ -34,6 +34,8 @@ parser$add_argument('outfile', metavar='OUTFILE',
                                             help='Out sitecount matrix')
 parser$add_argument('--scale', metavar="TRUE or FALSE", type = "integer", 
                     default=0, help="Scale matrix?")
+parser$add_argument('--AddIntercept', metavar="TRUE or FALSE", type = "integer", 
+                    default=0, help="Make first column a column of 1s if add intercept. Default FALSE")
 parser$add_argument('--center', metavar="TRUE or FALSE", type = "integer", 
                     default=0, help="Center matrix?")
 parser$add_argument('--byrow', action="store_true", 
@@ -48,6 +50,7 @@ args <- parser$parse_args()
 # change int to logical
 args$scale <- as.logical(args$scale)
 args$center <- as.logical(args$center)
+args$AddIntercept <- as.logical(args$AddIntercept)
 
 # print some progress messages to stderr if "quietly" wasn't requested
 if ( args$verbose ) { 
@@ -75,8 +78,19 @@ if (args$byrow){
   dat.mat <- t(scale(t(dat.mat), center=args$center, scale=args$scale))
 }
 
+
 dat.mat <- as.data.frame(dat.mat)
+
+if (args$AddIntercept){
+  xcol <- rep(1, nrow(dat.mat))
+  cnames.orig <- colnames(dat.mat)
+  dat.mat <- cbind(xcol, dat.mat)
+  cnames.new <- c("intercept", cnames.orig)
+  colnames(dat.mat) <- cnames.new
+}
+
 dat.mat <- cbind(Gene.ID, dat.mat)
+
 
 print(head(dat.mat))
 # write to output
