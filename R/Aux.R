@@ -85,12 +85,15 @@ GetMarkFromStr <- function(x){
   return(jmatch[[1]])
 }
 
-ClipLast <- function(x, jsep = "-"){
+ClipLast <- function(x, jsep = "-", jsep.out = NULL){
   # B6-13W1-BM-H3K4me3-1_269 -> B6-13W1-BM-H3K4me3
+  if (is.null(jsep.out)){
+    jsep.out <- jsep
+  }
   jsplit <- strsplit(x, jsep)[[1]]
   # remove last one
   N <- length(jsplit) - 1
-  return(paste(jsplit[1:N], collapse = jsep))
+  return(paste(jsplit[1:N], collapse = jsep.out))
 }
 
 KeepLast <- function(x, jsep = "-"){
