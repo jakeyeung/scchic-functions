@@ -3,6 +3,12 @@
 # File: ~/projects/scchicFuncs/R/AuxLDA.R
 #
 
+AddTopicToTmResult <- function(tm.result, jsep = ""){
+  colnames(tm.result$topics) <- paste("topic", colnames(tm.result$topics), sep = jsep)
+  rownames(tm.result$terms) <- paste("topic", rownames(tm.result$terms), sep = jsep)
+  return(tm.result)
+}
+
 AnnotateCoordsFromList <- function(coords.vec,
                                    inf.tss="/Users/yeung/data/scchic/tables/gene_tss_winsize.50000.bed",
                                    txdb = TxDb.Mmusculus.UCSC.mm10.knownGene,
