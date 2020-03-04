@@ -140,7 +140,7 @@ AnnotateBins2 <- function(terms.mat, top.thres=0.995, inf.tss="/Users/yeung/data
     filter(!is.na(termgene)) %>%
     mutate(gene = sapply(termgene, function(x) strsplit(x, ";")[[1]][[2]])) %>%
     group_by(gene)  # dont filter use
-  return(list('topic.regions' = topic.regions, 'regions.annotated' = regions.annotated, 'terms.annot' = terms.annot, 'out2.df.closest' = out2.df.closest), 'terms.filt' = terms.filt)
+  return(list('topic.regions' = topic.regions, 'regions.annotated' = regions.annotated, 'terms.annot' = terms.annot, 'out2.df.closest' = out2.df.closest, 'terms.filt' = terms.filt))
 }
 
 DoUmapAndLouvain <- function(topics.mat, jsettings){
