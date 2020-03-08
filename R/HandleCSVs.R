@@ -24,9 +24,9 @@ LoadCellAnnotsEtOH.MorePlates <- function(annots.dir = "/home/jyeung/hub_oudenaa
       ungroup()  # no fltering needed because jmark.annot lilkely will not match two different experis
     if (jmark.annot == "K27"){
       annots2 <- annots1 %>%
-        mutate(cell = gsub("BM-EtOH-EndAllAB-K27m3-K9m3-p3", "BM-EtOH-EndAllAB-K27m3-K9m3-p2", cell))
+        mutate(cell = gsub("BM-EtOH-EndAllAB-K27m3-p9", "BM-EtOH-EndAllAB-K27m3-p8", cell))
       annots3 <- annots1 %>%
-        mutate(cell = gsub("BM-EtOH-EndAllAB-K27m3-K9m3-p3", "BM-EtOH-MNctrl-K27m3-K9m3-p1", cell))
+        mutate(cell = gsub("BM-EtOH-EndAllAB-K27m3-p9", "BM-EtOH-MNctrl-K27m3-p7", cell))
     } else if (jmark.annot == "K9"){
       annots2 <- annots1 %>%
         mutate(cell = gsub("BM-EtOH-EndAllAB-K9m3-p6", "BM-EtOH-EndAllAB-K9m3-p5", cell))
