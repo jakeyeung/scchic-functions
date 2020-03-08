@@ -16,6 +16,39 @@
 #   return(mat.tmp.filt)
 # }
 
+LoadCellAnnotsEtOH.MorePlates <- function(annots.dir = "/home/jyeung/hub_oudenaarden/jyeung/data/dblchic/from_mflorescu/annotations_EtOH", 
+                                          jmarks.annot = c("K27", "K9", "K27_K9")){
+  names(jmarks.annot) <- jmarks.annot
+  annots <- lapply(jmarks.annot, function(jmark.annot){
+    annots1 <- LoadCellAnnotsEtOH(annots.dir = annots.dir, jmarks.annot = jmark.annot) %>%
+      ungroup()  # no fltering needed because jmark.annot lilkely will not match two different experis
+    if (jmark.annot == "K27"){
+      annots2 <- annots1 %>%
+        mutate(cell = gsub("BM-EtOH-EndAllAB-K27m3-K9m3-p3", "BM-EtOH-EndAllAB-K27m3-K9m3-p2", cell))
+      annots3 <- annots1 %>%
+        mutate(cell = gsub("BM-EtOH-EndAllAB-K27m3-K9m3-p3", "BM-EtOH-MNctrl-K27m3-K9m3-p1", cell))
+    } else if (jmark.annot == "K9"){
+      annots2 <- annots1 %>%
+        mutate(cell = gsub("BM-EtOH-EndAllAB-K9m3-p6", "BM-EtOH-EndAllAB-K9m3-p5", cell))
+      annots3 <- annots1 %>%
+        mutate(cell = gsub("BM-EtOH-EndAllAB-K9m3-p6", "BM-EtOH-MNctrl-K9m3-p4", cell))
+    } else if (jmark.annot == "K27_K9"){
+      annots2 <- annots1 %>%
+        mutate(cell = gsub("BM-EtOH-EndAllAB-K27m3-K9m3-p3", "BM-EtOH-EndAllAB-K27m3-K9m3-p2", cell))
+      annots3 <- annots1 %>%
+        mutate(cell = gsub("BM-EtOH-EndAllAB-K27m3-K9m3-p3", "BM-EtOH-MNctrl-K27m3-K9m3-p1", cell))
+    } else {
+      warning(jmark.annot, "not coded")
+      return(NULL)
+    }
+    annots <- do.call(rbind, list(annots1, annots2, annots3)) %>%
+      mutate(cell.orig = cell,
+             cell = make.names(cell))
+  }) %>%
+    bind_rows()
+  return(annots)
+}
+
 LoadCellAnnotsEtOH <- function(annots.dir = "/Users/yeung/data/dblchic/annotations_EtOH", jmarks.annot = c("K27", "K9", "K27_K9")){
   # get annots
   # annots.dir <- "/Users/yeung/data/dblchic/annotations_EtOH"
