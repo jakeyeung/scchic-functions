@@ -19,7 +19,7 @@
 LoadCellAnnotsEtOH <- function(annots.dir = "/Users/yeung/data/dblchic/annotations_EtOH", jmarks.annot = c("K27", "K9", "K27_K9")){
   # get annots
   # annots.dir <- "/Users/yeung/data/dblchic/annotations_EtOH"
-  annots.lst <- sapply(jmarks.annot, function(x) list.files(path = file.path(annots.dir), pattern = paste0("*", x, ".txt"), full.names = TRUE)) %>%
+  annots.lst <- sapply(jmarks.annot, function(x) list.files(path = file.path(annots.dir), pattern = paste0("*[a-z]_", x, ".txt"), full.names = TRUE)) %>%
     unlist()
   annots.name <- sapply(annots.lst, function(x) strsplit(basename(x), split = "_")[[1]][[1]], USE.NAMES = FALSE)
   annots.dat <- mapply(FUN = LoadCellAnnots, annots.lst, annots.name, SIMPLIFY = FALSE) %>%
