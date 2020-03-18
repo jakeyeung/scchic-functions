@@ -145,7 +145,7 @@ AnnotateBins2 <- function(terms.mat, top.thres=0.995, inf.tss="/Users/yeung/data
 
 DoUmapAndLouvain <- function(topics.mat, jsettings){
   umap.out <- umap(topics.mat, config = jsettings)
-  dat.umap.long <- data.frame(cell = rownames(umap.out$layout), umap1 = umap.out$layout[, 1], umap2 = umap.out$layout[, 2])
+  dat.umap.long <- data.frame(cell = rownames(umap.out$layout), umap1 = umap.out$layout[, 1], umap2 = umap.out$layout[, 2], stringsAsFactors = FALSE)
   dat.umap.long <- DoLouvain(topics.mat = topics.mat, custom.settings.louv = jsettings, dat.umap.long = dat.umap.long)
   return(dat.umap.long)
 }
