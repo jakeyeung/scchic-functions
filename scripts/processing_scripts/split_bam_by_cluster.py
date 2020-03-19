@@ -145,6 +145,7 @@ def main():
             assert not os.path.exists(checkoutpath)
 
     dup_count = 0
+    lowq_count = 0
     assign_count = 0
     unassign_count = 0
 
@@ -162,6 +163,9 @@ def main():
             else:
                 writebamdic[clstr] = pysam.AlignmentFile(tmppath, "wb", header = new_header)
         for total_count, read in enumerate(inbam):
+            if read.mapping_quality < args.mapq:
+                lowq_count += 1
+                continue
             if read.is_duplicate:
                 dup_count += 1
                 continue
@@ -182,12 +186,17 @@ def main():
         for clstr in clstrs:
             os.remove(unsorteddic[clstr])
     print("Splitting bams into clusters ... DONE")
+    print("lowq_count: " + str(lowq_count))
+    print("dup_count: " + str(dup_count))
+    print("unassign_count: " + str(unassign_count))
+    print("assign_count: " + str(assign_count))
 
     # Print arguments supplied by user
     if not args.quiet:
         if args.logfile is not None:
             sys.stdout = open(args.logfile, "w+")
         print(datetime.datetime.now().strftime('Code finished on: %c'))
+    
 
 if __name__ == '__main__':
     main()
