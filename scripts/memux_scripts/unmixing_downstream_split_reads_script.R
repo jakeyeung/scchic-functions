@@ -216,7 +216,7 @@ print(m.hist)
 
 
 # get active, repress index for each cell
-# if louvains are now from clusters need eto rethink jcoord
+# if clusters are now from clusters need eto rethink jcoord
 cell.vec <- names(fits.out)
 names(cell.vec) <- cell.vec
 coords.dbl <- lapply(cell.vec, function(jcell){
@@ -333,14 +333,14 @@ for (i in seq(length(dbl.pairs.counts))){
   m.dbl <- ggplot(dat.umap.dbl %>% mutate(is.pair = pair == jpair), aes(x = umap1, y = umap2, color = is.pair)) + 
     geom_point() + 
     theme_bw() + theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "bottom") + 
-    ggtitle(paste(jmark.dbl.dash, "double mark louvain pairs:", jpair, "N cells:", jcounts)) + 
+    ggtitle(paste(jmark.dbl.dash, "double mark cluster pairs:", jpair, "N cells:", jcounts)) + 
     scale_color_manual(values = cbPalette)
-  m.act.col.pair <- ggplot(dat.louv[[jmark.act]] %>% mutate(is.pair = louvain == act.clst), 
+  m.act.col.pair <- ggplot(dat.louv[[jmark.act]] %>% mutate(is.pair = cluster == act.clst), 
                            aes(x = umap1, y = umap2, color = is.pair)) + geom_point() + 
     scale_color_manual(values = cbPalette) + 
     theme_bw() + theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "bottom") + 
     ggtitle(paste(jmark.act, "Pair:", jpair))
-  m.repress.col.pair <- ggplot(dat.louv[[jmark.repress]] %>% mutate(is.pair = louvain == repress.clst), 
+  m.repress.col.pair <- ggplot(dat.louv[[jmark.repress]] %>% mutate(is.pair = cluster == repress.clst), 
                                aes(x = umap1, y = umap2, color = is.pair)) + geom_point() + 
     scale_color_manual(values = cbPalette) + 
     theme_bw() + theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "bottom") + 
