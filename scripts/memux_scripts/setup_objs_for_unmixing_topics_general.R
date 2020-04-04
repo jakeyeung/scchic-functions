@@ -36,11 +36,11 @@ parser$add_argument('-mark1', metavar='STR',
 parser$add_argument('-mark2', metavar='STR',
                     help='Second mark (e.g., repressive mark)')
 parser$add_argument('-inf1', metavar='PATH',
-                    help='mark1 Path to UMAP annotated data containing LDA output (tm.result) for act and repress as well as celltype annotations for each cluster (dat.merge, with cluster colname)')
+                    help='mark1 Path to UMAP annotated data containing LDA output (out.lda) act and repress as well as celltype annotations for each cluster (dat.merge, with cluster colname)')
 parser$add_argument('-inf2', metavar='PATH',
-                    help='mark2 Path to UMAP annotated data containing LDA output (tm.result) for act and repress as well as celltype annotations for each cluster (dat.merge, with cluster colname)')
+                    help='mark2 Path to UMAP annotated data containing LDA output (out.lda) for act and repress as well as celltype annotations for each cluster (dat.merge, with cluster colname)')
 parser$add_argument('-infdbl', metavar='PATH',
-                    help='dblmark Path to UMAP annotated data containing LDA output (tm.result) for act and repress as well as celltype annotations for each cluster (dat.merge, with cluster colname, for removing NAs)')
+                    help='dblmark Path to UMAP annotated data containing LDA output (out.lda, count.mat) act and repress as well as celltype annotations for each cluster (dat.merge, with cluster colname, for removing NAs). count.mat used to set up raw counts')
 parser$add_argument('-outprefix', metavar='OUTFILE',
                     help='Prefix to write .RData and .pdf')
 parser$add_argument("--RemoveNA", action="store_true", default=FALSE,
