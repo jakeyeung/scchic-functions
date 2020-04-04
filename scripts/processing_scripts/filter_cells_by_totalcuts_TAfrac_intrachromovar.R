@@ -37,11 +37,13 @@ parser$add_argument('-countcutoffmin', metavar='INTEGER', type = 'integer', narg
                                             help='Minimum counts')
 parser$add_argument('-countcutoffmax', metavar='INTEGER', type = 'integer', nargs = "+", 
                                             help='Maximum counts')
-parser$add_argument('-varcutoffmin', metavar='PosNumber', type = 'numeric', nargs = "+", 
+parser$add_argument('-varcutoffmin', metavar='PosNumber', type = 'double', nargs = "+", 
                                             help='Minimum intrachromosomal variance')
-parser$add_argument('-varcutoffmax', metavar='PosNumber', type = 'numeric', nargs = "+", 
+parser$add_argument('-varcutoffmax', metavar='PosNumber', type = 'double', nargs = "+", 
                                             help='Maximum intrachromosomal variance')
-parser$add_argument('-TAcutoff', metavar='TAcutoff', type = 'character',
+parser$add_argument('-jmergesize', metavar='Nbins', type = 'integer', default=1000, 
+                                            help='How many bins to merge when calculating global variance')
+parser$add_argument('-TAcutoff', metavar='TAcutoff', type = 'double',
                                             help='Minimum TA fraction')
 parser$add_argument('--overwrite', action="store_true", default=FALSE, help="Force overwrite")
 parser$add_argument('--keepEmptyWells', action="store_true", default=FALSE, help="Do not removing the corner 8 wells we call EmptyWells")
@@ -101,6 +103,7 @@ library(scchicFuncs)
 outdir <- args$outdir
 dir.create(outdir)
 
+jmergesize <- args$jmergesize
 cutoff.counts <- args$countcutoffmin
 cutoff.TA <- args$TAcutoff
 overwrite <- args$overwrite
@@ -214,13 +217,13 @@ mats <- lapply(infs.mat, function(inf){
 # Load variance and calculate it  -----------------------------------------
 
 dat.vars.raw.lst <- lapply(jnames, function(jname){
-  dat.var <- CalculateVarRaw(mats[jname], merge.size = jmergesize, chromo.exclude.grep = "^chrX|^chrY", jpseudocount = 1, jscale = 10^6, calculate.ncuts = TRUE) %>%
+  dat.var <- CalculateVarRaw(mats[[jname]], merge.size = jmergesize, chromo.exclude.grep = "^chrX|^chrY", jpseudocount = 1, jscale = 10^6, calculate.ncuts = TRUE) %>%
     rowwise() %>%
     mutate(plate = ClipLast(cell, jsep = "_"))
   dat.var$mark <- jname
   dat.var <- dat.var %>%
     rowwise() %>%
-    mutate(good.cells.var = ncuts.var > varmin.counts.hash[[jname]] & ncuts.var < varmax.conts.hash[[jname]])
+    mutate(good.cells.var = ncuts.var > varmin.counts.hash[[jname]] & ncuts.var < varmax.counts.hash[[jname]])
   return(dat.var)
 })
 
