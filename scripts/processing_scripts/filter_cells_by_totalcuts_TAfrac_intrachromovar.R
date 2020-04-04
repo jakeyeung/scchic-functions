@@ -46,6 +46,7 @@ parser$add_argument('-jmergesize', metavar='Nbins', type = 'integer', default=10
 parser$add_argument('-TAcutoff', metavar='TAcutoff', type = 'double',
                                             help='Minimum TA fraction')
 parser$add_argument('--overwrite', action="store_true", default=FALSE, help="Force overwrite")
+parser$add_argument('--doNotWriteTables', action="store_true", default=FALSE, help="Turn off writing rds outputs. Outputs pdf only")
 parser$add_argument('--keepEmptyWells', action="store_true", default=FALSE, help="Do not removing the corner 8 wells we call EmptyWells")
 parser$add_argument("--verbose", action="store_true", default=TRUE,
                         help="Print extra output [default]")
@@ -184,6 +185,21 @@ m.scatter.bymark.col <- ggplot(dat.rz.filt, aes(x = total.count, y = TA.frac, co
   facet_wrap(~mark, ncol = 1)
 
 # for each mark, plot each plate 
+m.scatter.lst <- lapply(jnames, function(jname){
+  m <- ggplot(subset(dat.rz.filt, mark == jname), aes(x = total.count, y = TA.frac, color = good.cell, size = empty.well, shape = empty.well)) + geom_point()  +
+    scale_x_log10() + theme_bw() + theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+    facet_wrap(~mark, ncol = 1) + ggtitle(jname) + 
+    geom_vline(xintercept = c(cutoffmin.counts.hash[[jname]], cutoffmax.counts.hash[[jname]])) + 
+    geom_hline(yintercept = cutoff.TA)
+  return(m)
+})
+
+m.density.lst <- lapply(jnames, function(jname){
+  ggplot(subset(dat.rz.filt, mark == jname), aes(x = total.count, fill = mark)) + geom_density(alpha = 0.3)  +
+    scale_x_log10() + theme_bw() + theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+    scale_fill_viridis_d() + ggtitle(jname) + 
+    geom_vline(xintercept = c(cutoffmin.counts.hash[[jname]], cutoffmax.counts.hash[[jname]]))
+})
 
 
 # how many good cells?
@@ -264,20 +280,27 @@ print(lapply(mats, dim))
 
 # Plot pdf outputs --------------------------------------------------------
 
-pdf(pdfout, useDingbats = FALSE)
+pdf(pdfout, width = 1440/72, height = 815/72, useDingbats = FALSE)
   print(m.scatter.bymark.col)
   print(m.density.bymark)
+  print(m.scatter.lst)
+  print(m.density.lst)
   print(m.var.lst)
 dev.off()
 
-# save each mat separately 
-for (jname in jnames){
-  outpath <- outpaths[[jname]]
-  jtmp <- mats[[jname]]
-  assertthat::assert_that(nrow(jtmp) > 0 & ncol(jtmp) > 0)
-  saveRDS(jtmp, file = outpath)
-  writeMM(jtmp, sparse = TRUE, file = paste0(outbases[[jname]], ".mm"))
-  write.table(rownames(jtmp), file = paste0(outbases[[jname]], ".rownames"), sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)
-  write.table(colnames(jtmp), file = paste0(outbases[[jname]], ".colnames"), sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)
+if (!args$DoNotWriteTables){
+  # save each mat separately 
+  for (jname in jnames){
+    outpath <- outpaths[[jname]]
+    jtmp <- mats[[jname]]
+    assertthat::assert_that(nrow(jtmp) > 0 & ncol(jtmp) > 0)
+    saveRDS(jtmp, file = outpath)
+    writeMM(jtmp, sparse = TRUE, file = paste0(outbases[[jname]], ".mm"))
+    write.table(rownames(jtmp), file = paste0(outbases[[jname]], ".rownames"), sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)
+    write.table(colnames(jtmp), file = paste0(outbases[[jname]], ".colnames"), sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)
+  }
+} else {
+  print(paste("Do not write tables:", args$doNotWriteTables))
+  print("Skipping writing, but plots still written")
 }
 
