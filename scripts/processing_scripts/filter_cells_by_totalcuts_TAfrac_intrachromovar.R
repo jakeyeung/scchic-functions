@@ -288,7 +288,7 @@ pdf(pdfout, width = 1440/72, height = 815/72, useDingbats = FALSE)
   print(m.var.lst)
 dev.off()
 
-if (!args$DoNotWriteTables){
+if (!args$doNotWriteTables){
   # save each mat separately 
   for (jname in jnames){
     outpath <- outpaths[[jname]]
