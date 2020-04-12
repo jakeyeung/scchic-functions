@@ -1,5 +1,6 @@
-CalculateVarRaw <- function(count.mat, merge.size = 1000, chromo.exclude.grep = "^chrX|^chrY", jpseudocount = 1, jscale = 10^6, calculate.ncuts = TRUE){
-  count.mat <- as.matrix(count.mat)
+CalculateVarRaw <- function(count.mat, merge.size = 1000, chromo.exclude.grep = "^chrX|^chrY", jpseudocount = 1, jscale = 10^6, calculate.ncuts = TRUE, sort.bins = TRUE){
+  row.order <- gtools::mixedorder(rownames(count.mat))
+  count.mat <- as.matrix(count.mat[row.order, ])
   if (calculate.ncuts){
     ncuts.dat <- data.frame(cell = colnames(count.mat), ncuts = colSums(count.mat), stringsAsFactors = FALSE)
   }
