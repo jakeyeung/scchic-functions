@@ -85,17 +85,22 @@ PlotSpatialGene <- function(dat.adj, jfits.nlm.all, jgene){
   # multiplot(m1, m2, cols = 2)
 }
 
-PlotXYNoColor <- function(jsub, xvar, yvar, jcol = "gray80", jsize = 1){
+PlotXYNoColor <- function(jsub, xvar, yvar, jcol = "gray80", jsize = 1, use.ggrastr=TRUE){
   m <- ggplot(jsub, aes_string(x = xvar, y = yvar)) +
     ggrastr::geom_point_rast(size = jsize, color = jcol) +
     theme_bw() +
     theme(aspect.ratio=1, panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(), axis.text = element_blank(), axis.ticks = element_blank(), panel.border = element_blank()) +
     xlab("") + ylab("")
+  if (use.ggrastr){
+    m <- m + ggrastr::geom_point_rast(size = jsize, color = jcol)
+  } else {
+    m <- m + geom_point(size = jsize, color = jcol)
+  }
   return(m)
 }
 PlotXYWithColor <- function(jsub, xvar = "X1", yvar = "X2", cname = "activity", jcol = scales::muted("darkblue"), jtitle = "", jcol.low = "gray85", jcol.mid = "gray50", jsize = 1, leg.name = NULL, jjrange = "auto",
-                            cont.color = TRUE, col.palette = NA, strip.ticks = FALSE, manual.mid = NA, remove.axis.info = TRUE){
+                            cont.color = TRUE, col.palette = NA, strip.ticks = FALSE, manual.mid = NA, remove.axis.info = TRUE, use.ggrastr = TRUE){
   if (is.null(leg.name)){
     leg.name <- cname
   }
@@ -105,9 +110,14 @@ PlotXYWithColor <- function(jsub, xvar = "X1", yvar = "X2", cname = "activity", 
   }
   jsub <- RankOrder(jsub, cname = cname, out.cname = "orderrank")
   m1 <- ggplot(jsub, aes_string(x = xvar, y = yvar, col = cname.str, order = "orderrank")) +
-    ggrastr::geom_point_rast(size = jsize) +
+    # ggrastr::geom_point_rast(size = jsize) +
     theme_bw() +
     xlab("") + ylab("") + ggtitle(jtitle)
+  if (use.ggrastr){
+    m1 <- m1 + ggrastr::geom_point_rast(size = jsize)
+  } else {
+    m1 <- m1 + geom_point(size = jsize)  # sometimes ggrastr is hard to install
+  }
   if (remove.axis.info){
     m1 <- m1 + theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "bottom",
                          axis.ticks=element_blank(),
