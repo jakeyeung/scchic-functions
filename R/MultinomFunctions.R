@@ -9,7 +9,7 @@ CollapseRowsByGene <- function(count.mat, as.long = TRUE, track.kept.gene = FALS
   # prepare raw data. Rownames of format  chr1:-17665-32335;rpl24;1
   genes.chic <- sapply(rownames(count.mat), function(x) strsplit(x, ";")[[1]][[2]])
   # get count.filt, sum across same gene
-  count.mat.tmp <- data.frame(gene = genes.chic, genefull = rownames(count.mat), data.frame(sum.across.cells = as.matrix(rowSums(count.mat))), stringsAsFactors = FALSE)
+  count.mat.tmp <- data.frame(gene = genes.chic, genefull = rownames(count.mat), data.frame(sum.across.cells = Matrix::rowSums(count.mat)), stringsAsFactors = FALSE)
   # rownames(count.mat.tmp) <- genes.chic
   count.mat.long <- reshape2::melt(count.mat.tmp, id.vars = c("gene", "genefull"), variable.name = c("cellname"), value.name = "total.cuts") %>%
     group_by(gene) %>%
