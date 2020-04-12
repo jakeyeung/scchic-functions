@@ -3,22 +3,27 @@
 #  
 # 2019-11-14
 
-CollapseRowsByGene <- function(count.mat, as.long = TRUE){
+CollapseRowsByGene <- function(count.mat, as.long = TRUE, track.kept.gene = FALSE){
+  # take rowSums and pick gene with most counts
+  
   # prepare raw data. Rownames of format  chr1:-17665-32335;rpl24;1
   genes.chic <- sapply(rownames(count.mat), function(x) strsplit(x, ";")[[1]][[2]])
   # get count.filt, sum across same gene
-  count.mat.tmp <- count.mat
-  rownames(count.mat.tmp) <- genes.chic
-  count.mat.long <- melt(as.matrix(count.mat.tmp), value.name = "count") %>%
-    group_by(Var1, Var2) %>%
-    summarise(count = max(count))
+  count.mat.tmp <- data.frame(gene = genes.chic, genefull = rownames(count.mat), data.frame(sum.across.cells = as.matrix(rowSums(count.mat))), stringsAsFactors = FALSE)
+  # rownames(count.mat.tmp) <- genes.chic
+  count.mat.long <- reshape2::melt(count.mat.tmp, id.vars = c("gene", "genefull"), variable.name = c("cellname"), value.name = "total.cuts") %>%
+    group_by(gene) %>%
+    summarise(genefull = genefull[which.max(total.cuts)], 
+              total.cuts = max(total.cuts))
+  
+  rnames.keep <- count.mat.long$genefull
+  count.mat.filt <- count.mat[rnames.keep, ]
   if (as.long){
-    return(count.mat.long)
+    count.mat.filt.long <- reshape2::melt(as.matrix(count.mat.filt))
+    colnames(count.mat.filt.long) <- c("genefull", "cellname", "ncuts")
+    return(count.mat.filt.long)
   } else {
-    jout <- as.data.frame(dcast(count.mat.long, Var1 ~ Var2, value.var = "count"))
-    rownames(jout) <- jout$Var1; jout$Var1 <- NULL
-    jout <- Matrix(as.matrix(jout), sparse = TRUE)
-    return(jout)
+    return(count.mat.filt)
   }
 }
 

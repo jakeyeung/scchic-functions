@@ -62,12 +62,6 @@ AnnotateCoordsFromList <- function(coords.vec,
   terms.hash <- hash::hash(out2.df.closest$region_coord, terms.new)
 
   return(list('regions.annotated' = regions.annotated, 'out2.df.closest' = out2.df.closest))
-
-
-
-
-
-
 }
 
 
