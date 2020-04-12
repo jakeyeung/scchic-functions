@@ -45,6 +45,8 @@ parser$add_argument("-n", "--projname", metavar='Name of project', default="MyPr
                         help="Name of project for naming pdf and Robj output. Make this meaningful otherwise it will overwrite projects!")
 parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
                         help="Print extra output [default]")
+parser$add_argument("--SkipPlots", action="store_true", default=FALSE,
+                        help="Do not make plots, default FALSE")
                                         
 # get command line options, if help option encountered print help and exit,
 # otherwise if options not found on command line then set defaults, 
@@ -146,36 +148,39 @@ save(out.lda, count.mat, count.mat.orig, file = outpath)
 print("Time elapsed after LDA")
 print(Sys.time() - jstart)
 
-# write plots to output
-# save plots
-jsettings <- umap.defaults
-jsettings$n_neighbors <- 30
-jsettings$min_dist <- 0.1
-jsettings$random_state <- 123
-tm.result <- posterior(out.lda)
-dat.impute.log <- log2(t(tm.result$topics %*% tm.result$terms))
-jchromos <- sort(unique(sapply(colnames(tm.result$terms), function(x) strsplit(x, ":")[[1]][[1]])))
-pdf(plotpath, width = 1440/72, height = 815/72, useDingbats = FALSE)
-  # do UMAP, plot imputed intrachromosomal variance 
-  dat.umap <- DoUmapAndLouvain(tm.result$topics, jsettings) %>%
-    rowwise() %>%
-    mutate(plate = ClipLast(as.character(cell), jsep = "_"))
-  dat.var <- CalculateVarAll(dat.impute.log, jchromos)
-  dat.merge <- left_join(dat.umap, dat.var)
-  m.louv <- ggplot(dat.merge, aes(x = umap1, y = umap2, color = louvain)) + geom_point() + 
-    theme_bw() + theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
-    facet_wrap(~plate)
-  m.intrachrom <- ggplot(dat.merge, aes(x = umap1, y = umap2, color = cell.var.within.sum.norm)) + 
-    geom_point() + 
-    theme_bw() + theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
-    facet_wrap(~plate) + 
-    scale_color_viridis_c(direction = -1)
-  print(m.louv)
-  print(m.intrachrom)
-  print(p1)
-  print(p2)
-  print(p3)
-dev.off()
+if (!args$SkipPlots){
+  # write plots to output
+  # save plots
+  jsettings <- umap.defaults
+  jsettings$n_neighbors <- 30
+  jsettings$min_dist <- 0.1
+  jsettings$random_state <- 123
+  tm.result <- posterior(out.lda)
+  dat.impute.log <- log2(t(tm.result$topics %*% tm.result$terms))
+  jchromos <- sort(unique(sapply(colnames(tm.result$terms), function(x) strsplit(x, ":")[[1]][[1]])))
+  pdf(plotpath, width = 1240/72, height = 815/72, useDingbats = FALSE)
+    # do UMAP, plot imputed intrachromosomal variance 
+    dat.umap <- DoUmapAndLouvain(tm.result$topics, jsettings) %>%
+      rowwise() %>%
+      mutate(plate = ClipLast(as.character(cell), jsep = "_"))
+    dat.var <- CalculateVarAll(dat.impute.log, jchromos)
+    dat.merge <- left_join(dat.umap, dat.var)
+    m.louv <- ggplot(dat.merge, aes(x = umap1, y = umap2, color = louvain)) + geom_point() + 
+      theme_bw() + theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+      facet_wrap(~plate)
+    m.intrachrom <- ggplot(dat.merge, aes(x = umap1, y = umap2, color = cell.var.within.sum.norm)) + 
+      geom_point() + 
+      theme_bw() + theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+      facet_wrap(~plate) + 
+      scale_color_viridis_c(direction = -1)
+    print(m.louv)
+    print(m.intrachrom)
+    print(p1)
+    print(p2)
+    print(p3)
+  dev.off()
+}
+
 
 
 
