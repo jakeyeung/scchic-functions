@@ -45,6 +45,8 @@ parser$add_argument('-jmergesize', metavar='Nbins', type = 'integer', default=10
                                             help='How many bins to merge when calculating global variance')
 parser$add_argument('-TAcutoff', metavar='TAcutoff', type = 'double',
                                             help='Minimum TA fraction')
+parser$add_argument('-chromoskeep', metavar='ChromosomeNames', type = 'character', nargs = "+", required=TRUE,
+                                            help='List of chromosomes to keep')
 parser$add_argument('--overwrite', action="store_true", default=FALSE, help="Force overwrite")
 parser$add_argument('--doNotWriteTables', action="store_true", default=FALSE, help="Turn off writing rds outputs. Outputs pdf only")
 parser$add_argument('--keepEmptyWells', action="store_true", default=FALSE, help="Do not removing the corner 8 wells we call EmptyWells")
@@ -94,6 +96,8 @@ library(Matrix)
 
 library(JFuncs)
 library(scchicFuncs)
+
+library(gtools)
 
 # library(GenomicRanges)
 
@@ -226,6 +230,20 @@ mats <- lapply(infs.mat, function(inf){
   mat <- ReadMatSlideWinFormat(inf)
   cols.i <- colnames(mat) %in% cells.keep
   mat.filt <- mat[, cols.i]
+
+  # filter chromosomes
+  jchromos.vec <- sapply(rownames(mat), function(x) strsplit(x, ":")[[1]][[1]])
+  jchromos.filt.i <- which(jchromos.vec %in% args$chromoskeep)
+  assertthat::assert_that(length(jchromos.filt.i) > 0)
+  mat.filt <- mat.filt[jchromos.filt.i, ]
+  jchromos.check <- sort(unique(sapply(rownames(mat.filt), function(x) strsplit(x, ":")[[1]][[1]])))
+  print("Chromos check")
+  print(jchromos.check)
+
+  # sort by rows in a reasonable way
+  rorder <- gtools::mixedorder(rownames(mat.filt))
+  mat.filt <- mat.filt[rorder, ]
+  return(mat.filt)
 })
 
 
@@ -270,7 +288,13 @@ print("Dimensions before filtering by var:")
 print(lapply(mats, dim))
 # filter good cells
 mats <- lapply(infs.mat, function(inf){
-  mat <- ReadMatSlideWinFormat(inf)
+  if (endsWith(inf, ".csv")){
+    mat <- ReadMatSlideWinFormat(inf)
+  } else if (endsWith(inf, ".rds")){
+    mat <- readRDS(mat)
+  } else {
+    stop(inf, "must end with .csv or .rds")
+  }
   cols.i <- colnames(mat) %in% cells.keep.goodvar
   mat.filt <- mat[, cols.i]
 })

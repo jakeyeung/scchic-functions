@@ -72,7 +72,7 @@ LoadCellAnnots <- function(inf, annot){
 }
 
 
-ReadMatTSSFormat <- function(inf, as.sparse = TRUE, add.coord = FALSE){
+ReadMatTSSFormat <- function(inf, as.sparse = TRUE, add.coord = FALSE, sort.rnames = TRUE){
   dat <- fread(inf)[-1, ] %>%
     dplyr::rename(chromo = sampleName,
                   start = V2,
@@ -98,10 +98,14 @@ ReadMatTSSFormat <- function(inf, as.sparse = TRUE, add.coord = FALSE){
     rownames(dat) <- coords
     dat <- Matrix::Matrix(dat, sparse = TRUE)
   }
+  if (sort.rnames){
+    rnames.i <- gtools::mixedorder(rownames(dat))
+    dat <- dat[rnames.i, ]
+  }
   return(dat)
 }
 
-ReadMatSlideWinFormat <- function(inf, as.sparse = TRUE){
+ReadMatSlideWinFormat <- function(inf, as.sparse = TRUE, sort.rnames = TRUE){
   dat <- fread(inf)[-1, ] %>%
     dplyr::rename(chromo = sampleName,
                   start = V2,
@@ -122,6 +126,10 @@ ReadMatSlideWinFormat <- function(inf, as.sparse = TRUE){
     dat[is.na(dat)] <- 0
     rownames(dat) <- coords
     dat <- Matrix::Matrix(dat, sparse = TRUE)
+  }
+  if (sort.rnames){
+    rnames.i <- gtools::mixedorder(rownames(dat))
+    dat <- dat[rnames.i, ]
   }
   return(dat)
 }
