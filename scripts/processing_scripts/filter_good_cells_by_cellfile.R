@@ -77,4 +77,8 @@ if (!args$invert){
 count.dat$counts <- count.dat$counts[, samps.i]
 print(paste("Number of cells after filtering...", ncol(count.dat$counts)))
 
-save(count.dat, file = args$outfile)
+if (endsWith(args$outfile, ".rds")){
+  saveRDS(count.dat$counts, file = args$outfile)
+} else {
+  save(count.dat, file = args$outfile)
+}

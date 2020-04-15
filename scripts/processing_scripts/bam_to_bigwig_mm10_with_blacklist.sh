@@ -20,4 +20,4 @@ bl=$4
 [[ ! -e $inbam ]] && echo "$inbam not found, exiting" && exit 1
 [[ -e $outbw ]] && echo "$outbw found, exiting for safety" && exit 1
 # bamCoverage --bam $inbam -o $outbw --binSize 10 --normalizeUsing RPGC --effectiveGenomeSize 2652783500
-bamCoverage --bam $inbam -o $outbw --binSize $bsize --normalizeUsing CPM --blackListFileName $bl
+bamCoverage --bam $inbam -o $outbw --binSize $bsize --normalizeUsing CPM --blackListFileName $bl --skipNAs
