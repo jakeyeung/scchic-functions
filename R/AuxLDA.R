@@ -108,7 +108,7 @@ AnnotateBins2 <- function(terms.mat, top.thres=0.995, inf.tss="/Users/yeung/data
     mutate(midpt = start + (end - start) / 2) %>%
     filter(region_coord %in% terms.filt.top$term)
 
-  annots.gr <- makeGRangesFromDataFrame(annots.biomart %>% dplyr::select(seqnames, start, end, SYMBOL, region_coord), keep.extra.columns = TRUE)
+  annots.gr <- makeGRangesFromDataFrame(annots.biomart %>% dplyr::select(seqnames, start, end, SYMBOL, region_coord, ENSEMBL), keep.extra.columns = TRUE)
   annots.tss.gr <- makeGRangesFromDataFrame(tss.dat, keep.extra.columns = TRUE)
 
   out <- findOverlaps(annots.tss.gr, annots.gr, type = "within")
