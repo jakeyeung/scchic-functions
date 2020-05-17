@@ -164,6 +164,31 @@ dat.rz.filt <- lapply(jnames, function(jmark){
   mutate(experi = ClipLast(samp, jsep = "_"),
          cellindx = paste("cell", strsplit(samp, "_")[[1]][[2]], sep = ""))
 
+# Load matrix -----------
+# filter good cells
+mats <- lapply(infs.mat, function(inf){
+  if (endsWith(inf, ".csv")){
+    mat <- ReadMatSlideWinFormat(inf)
+  } else if (endsWith(inf, ".rds")){
+    mat <- readRDS(mat)
+  } else {
+    stop(inf, "must end with .csv or .rds")
+  }
+  # filter chromosomes
+  jchromos.vec <- sapply(rownames(mat), function(x) strsplit(x, ":")[[1]][[1]])
+  jchromos.filt.i <- which(jchromos.vec %in% args$chromoskeep)
+  assertthat::assert_that(length(jchromos.filt.i) > 0)
+  mat.filt <- mat[jchromos.filt.i, ]
+  jchromos.check <- sort(unique(sapply(rownames(mat.filt), function(x) strsplit(x, ":")[[1]][[1]])))
+  print("Chromos check")
+  print(jchromos.check)
+
+  # sort by rows in a reasonable way
+  rorder <- gtools::mixedorder(rownames(mat.filt))
+  mat.filt <- mat.filt[rorder, ]
+  return(mat.filt)
+})
+
 
 
 # Get good cells  ---------------------------------------------------------
@@ -226,23 +251,9 @@ print(paste("Number of cells after:", length(cells.keep)))
 # Load mats ---------------------------------------------------------------
 
 # filter good cells
-mats <- lapply(infs.mat, function(inf){
-  mat <- ReadMatSlideWinFormat(inf)
+mats <- lapply(mats, function(mat){
   cols.i <- colnames(mat) %in% cells.keep
   mat.filt <- mat[, cols.i]
-
-  # filter chromosomes
-  jchromos.vec <- sapply(rownames(mat), function(x) strsplit(x, ":")[[1]][[1]])
-  jchromos.filt.i <- which(jchromos.vec %in% args$chromoskeep)
-  assertthat::assert_that(length(jchromos.filt.i) > 0)
-  mat.filt <- mat.filt[jchromos.filt.i, ]
-  jchromos.check <- sort(unique(sapply(rownames(mat.filt), function(x) strsplit(x, ":")[[1]][[1]])))
-  print("Chromos check")
-  print(jchromos.check)
-
-  # sort by rows in a reasonable way
-  rorder <- gtools::mixedorder(rownames(mat.filt))
-  mat.filt <- mat.filt[rorder, ]
   return(mat.filt)
 })
 
@@ -287,16 +298,10 @@ cells.keep.goodvar <- dat.vars.raw.long.filt$cell
 print("Dimensions before filtering by var:")
 print(lapply(mats, dim))
 # filter good cells
-mats <- lapply(infs.mat, function(inf){
-  if (endsWith(inf, ".csv")){
-    mat <- ReadMatSlideWinFormat(inf)
-  } else if (endsWith(inf, ".rds")){
-    mat <- readRDS(mat)
-  } else {
-    stop(inf, "must end with .csv or .rds")
-  }
+mats <- lapply(mats, function(mat){
   cols.i <- colnames(mat) %in% cells.keep.goodvar
   mat.filt <- mat[, cols.i]
+  return(mat.filt)
 })
 print("Dimensions after filtering by var:")
 print(lapply(mats, dim))
