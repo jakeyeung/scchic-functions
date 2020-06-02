@@ -105,14 +105,16 @@ ReadMatTSSFormat <- function(inf, as.sparse = TRUE, add.coord = FALSE, sort.rnam
   return(dat)
 }
 
-ReadMatSlideWinFormat <- function(inf, as.sparse = TRUE, sort.rnames = TRUE){
+ReadMatSlideWinFormat <- function(inf, as.sparse = TRUE, sort.rnames = TRUE, add.chromo = TRUE){
   dat <- fread(inf)[-1, ] %>%
     dplyr::rename(chromo = sampleName,
                   start = V2,
                   end = V3,)
   # remove missing
-  # add chr
-  dat$chromo <- paste("chr", dat$chromo, sep="")
+  if (add.chromo){
+    # add chr
+    dat$chromo <- paste("chr", dat$chromo, sep="")
+  }
   dat <- subset(dat, start != "Missing")
   dat$coord <- paste(dat$chromo, paste(dat$start, dat$end, sep = "-"), sep = ":")
   dat$chromo <- NULL
