@@ -15,7 +15,6 @@ AnnotateCoordsFromList.GeneWise <- function(coords.vec,
                                             annodb = "org.Mm.eg.db",
                                             chromos.keep=c(paste("chr", seq(19), sep = ""), "chrX", "chrY")){
   library(ChIPseeker)
-  assertthat::assert_that(file.exists(inf.tss))
   regions <- data.frame(seqnames = sapply(coords.vec, GetChromo),
                         start = sapply(coords.vec, GetStart),
                         end = sapply(coords.vec, GetEnd),
@@ -34,7 +33,13 @@ AnnotateCoordsFromList.GeneWise <- function(coords.vec,
                                                   annoDb=annodb))
   regions.annotated$region_coord <- names(regions.range)
   
-  tss.dat <- fread(inf.tss, col.names = c("seqnames", "start", "end", "tssname"))
+  if (is.character(inf.tss)){
+    assertthat::assert_that(file.exists(inf.tss))
+    tss.dat <- fread(inf.tss, col.names = c("seqnames", "start", "end", "tssname"))
+  } else {
+    print(paste("inf.tss not a filepath, interpreting as tss.dat has been directly added"))
+    tss.dat <- inf.tss
+  }
   tss.dat$gene <- sapply(tss.dat$tssname, function(x) strsplit(x, ";")[[1]][[2]])
   
   annots.biomart <- regions.annotated %>%
