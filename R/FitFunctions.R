@@ -3,6 +3,33 @@
 # File: ~/projects/scchic-functions/R/FitFunctions.R
 # 
 
+
+RefitPoissonForPlot <- function(jrow, cnames, datannots.filt.mark, ncuts.cell.mark){
+  jfit <- FitGlmRowClusters(jrow, cnames, dat.annots.filt.mark, ncuts.cells.mark, returnobj = TRUE)
+  ci <- confint(jfit$fit.full)
+  
+  params.fc.dat <- data.frame(param = rownames(ci), logLambdaLower = ci[, 1], logLambdaUpper = ci[, 2]) %>%
+    filter(param != "(Intercept)") %>%
+    rowwise() %>%
+    mutate(Cluster = ifelse(param == "(Intercept)", "aHSPCs", gsub("Cluster", "", param)),
+           logLambda = mean((logLambdaLower + logLambdaUpper) / 2))
+  
+  params.int.dat <- data.frame(param = rownames(ci)[[1]], logLambdaLower = ci[1, 1], logLambdaUpper = ci[1, 2]) %>%
+    rowwise() %>%
+    mutate(Cluster = ifelse(param == "(Intercept)", "aHSPCs", gsub("Cluster", "", param)),
+           logLambda = mean((logLambdaLower + logLambdaUpper) / 2))
+  
+  params.mean.dat <- params.fc.dat %>%
+    mutate(logLambda = params.int.dat$logLambda + logLambda,
+           logLambdaLower = params.int.dat$logLambdaLower + logLambdaLower,
+           logLambdaUpper = params.int.dat$logLambdaUpper + logLambdaUpper) %>%
+    bind_rows(., params.int.dat)
+  
+  # plot raw 
+  input.dat <- jfit$dat.input %>% rowwise() %>% mutate(logLambda = log(ncuts) - log(ncuts.total))
+  return(list(input.dat = input.dat, params.mean.dat = params.mean.dat, params.int.dat = params.int.dat))
+}
+
 FitGlmRowClusters <- function(jrow, cnames, dat.annots.filt.mark, ncuts.cells.mark, jbin = NULL, returnobj=FALSE){
   # use Offset by size of library
   # https://stats.stackexchange.com/questions/66791/where-does-the-offset-go-in-poisson-negative-binomial-regression
