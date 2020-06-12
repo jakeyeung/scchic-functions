@@ -4,9 +4,12 @@
 # 
 
 
-RefitPoissonForPlot <- function(jrow, cnames, datannots.filt.mark, ncuts.cell.mark){
+
+RefitPoissonForPlot <- function(jrow, cnames, dat.annots.filt.mark, ncuts.cells.mark, return.means = TRUE){
   jfit <- FitGlmRowClusters(jrow, cnames, dat.annots.filt.mark, ncuts.cells.mark, returnobj = TRUE)
-  ci <- confint(jfit$fit.full)
+  # https://stackoverflow.com/questions/27669101/strange-error-in-glm
+  # confint gives error sometimes
+  ci <- confint.default(jfit$fit.full)
   
   params.fc.dat <- data.frame(param = rownames(ci), logLambdaLower = ci[, 1], logLambdaUpper = ci[, 2]) %>%
     filter(param != "(Intercept)") %>%
@@ -19,16 +22,49 @@ RefitPoissonForPlot <- function(jrow, cnames, datannots.filt.mark, ncuts.cell.ma
     mutate(Cluster = ifelse(param == "(Intercept)", "aHSPCs", gsub("Cluster", "", param)),
            logLambda = mean((logLambdaLower + logLambdaUpper) / 2))
   
-  params.mean.dat <- params.fc.dat %>%
-    mutate(logLambda = params.int.dat$logLambda + logLambda,
-           logLambdaLower = params.int.dat$logLambdaLower + logLambdaLower,
-           logLambdaUpper = params.int.dat$logLambdaUpper + logLambdaUpper) %>%
-    bind_rows(., params.int.dat)
-  
-  # plot raw 
-  input.dat <- jfit$dat.input %>% rowwise() %>% mutate(logLambda = log(ncuts) - log(ncuts.total))
-  return(list(input.dat = input.dat, params.mean.dat = params.mean.dat, params.int.dat = params.int.dat))
+  if (return.means){
+    # use for plotting against raw data 
+    params.mean.dat <- params.fc.dat %>%
+      mutate(logLambda = params.int.dat$logLambda + logLambda,
+             logLambdaLower = params.int.dat$logLambdaLower + logLambdaLower,
+             logLambdaUpper = params.int.dat$logLambdaUpper + logLambdaUpper) %>%
+      bind_rows(., params.int.dat)
+    
+    # plot raw 
+    input.dat <- jfit$dat.input %>% rowwise() %>% mutate(logLambda = log(ncuts) - log(ncuts.total))
+    return(list(input.dat = input.dat, params.mean.dat = params.mean.dat, params.int.dat = params.int.dat))
+  } else {
+    # useful for just plotting CI of FC parameters
+    return(list(params.fc.dat = params.fc.dat, params.int.dat = params.int.dat))
+  }
 }
+
+
+# RefitPoissonForPlot.old <- function(jrow, cnames, datannots.filt.mark, ncuts.cells.mark){
+#   jfit <- FitGlmRowClusters(jrow, cnames, dat.annots.filt.mark, ncuts.cells.mark, returnobj = TRUE)
+#   ci <- confint(jfit$fit.full)
+#   
+#   params.fc.dat <- data.frame(param = rownames(ci), logLambdaLower = ci[, 1], logLambdaUpper = ci[, 2]) %>%
+#     filter(param != "(Intercept)") %>%
+#     rowwise() %>%
+#     mutate(Cluster = ifelse(param == "(Intercept)", "aHSPCs", gsub("Cluster", "", param)),
+#            logLambda = mean((logLambdaLower + logLambdaUpper) / 2))
+#   
+#   params.int.dat <- data.frame(param = rownames(ci)[[1]], logLambdaLower = ci[1, 1], logLambdaUpper = ci[1, 2]) %>%
+#     rowwise() %>%
+#     mutate(Cluster = ifelse(param == "(Intercept)", "aHSPCs", gsub("Cluster", "", param)),
+#            logLambda = mean((logLambdaLower + logLambdaUpper) / 2))
+#   
+#   params.mean.dat <- params.fc.dat %>%
+#     mutate(logLambda = params.int.dat$logLambda + logLambda,
+#            logLambdaLower = params.int.dat$logLambdaLower + logLambdaLower,
+#            logLambdaUpper = params.int.dat$logLambdaUpper + logLambdaUpper) %>%
+#     bind_rows(., params.int.dat)
+#   
+#   # plot raw 
+#   input.dat <- jfit$dat.input %>% rowwise() %>% mutate(logLambda = log(ncuts) - log(ncuts.total))
+#   return(list(input.dat = input.dat, params.mean.dat = params.mean.dat, params.int.dat = params.int.dat))
+# }
 
 FitGlmRowClusters <- function(jrow, cnames, dat.annots.filt.mark, ncuts.cells.mark, jbin = NULL, returnobj=FALSE){
   # use Offset by size of library
