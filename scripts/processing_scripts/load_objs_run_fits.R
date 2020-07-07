@@ -54,6 +54,10 @@ parser$add_argument("-n", "--ncores", type='integer', default=4,
                         help="Number of cores to run (default 4)")
 parser$add_argument("-m", "--method", type='character', default="Brent",
                         help="Method for optimization")
+parser$add_argument("-wlower", type='double', default=0,
+                        help="Minimum w, mixing fraction for first mark")
+parser$add_argument("-wupper", type='double', default=1,
+                        help="Maximum w, mixing fraction for first mark")
 parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
                         help="Print extra output [default]")
                                         
@@ -79,7 +83,7 @@ system.time(
   act.repress.coord.lst <- mclapply(cell.count.raw.merged.lst, function(cell.count.raw.merged){
     optim.out <- FitMixingWeight(cell.count.raw.merged = cell.count.raw.merged, 
                                  dat.impute.repress.lst = dat.impute.repress.lst, 
-                                 dat.impute.active = dat.impute.active, w.init = 0.5, w.lower = 0, w.upper = 1, jmethod = args$method)
+                                 dat.impute.active = dat.impute.active, w.init = 0.5, w.lower = args$wlower, w.upper = args$wupper, jmethod = args$method)
     ll.mat <- GetLLMerged(optim.out$par, cell.count.raw.merged, dat.impute.repress.lst, dat.impute.active, return.mat = TRUE)
     return(list(ll.mat = ll.mat, w = optim.out$par))
   }, mc.cores = args$ncores)

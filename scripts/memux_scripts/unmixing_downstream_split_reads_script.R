@@ -50,6 +50,8 @@ parser$add_argument('-inf_dblmark_lda', metavar='PATH to RDATA or ROBJ', require
                     help='Double mark LDA output path')
 parser$add_argument('-outprefix', metavar='OUTFILE', required = TRUE,
                     help='Prefix to write .RData and .pdf')
+parser$add_argument('--RemoveBadMixings', default=FALSE, action="store_true",
+                    help='Remove cells with mixings less than 0.01 or greater than 0.99')
 
 
 # get command line options, if help option encountered print help and exit,
@@ -112,7 +114,6 @@ outpdf <- paste0(outprefix, "-plots.pdf")
 outpdf.mats <- paste0(outprefix, "-plots_matsLL.pdf")
 outpdf.pairs <- paste0(outprefix, "-plots_pairs.pdf")
 
-
 # outputs for splitting reds 
 outpdf.split <- paste0(outprefix, "-plots_WithUnmixing.pdf")
 outf.unmixing <- paste0(outprefix, "-raw_unmixed.RData")
@@ -123,7 +124,8 @@ outf.mergedmat.repress <- paste0(outprefix, "-merged_mat.", jmark2, ".rds")
 outf.unmixedmat.act <- paste0(outprefix, "-unmixed_mat.", jmark, ".rds")
 outf.unmixedmat.repress <- paste0(outprefix, "-unmixed_mat.", jmark2, ".rds")
 
-
+outtxt.badcells <- paste0(outprefix, "-badcells.txt")
+outrdata.badcells <- paste0(outprefix, "-badcells.RData")
 
 
 # Filenames ---------------------------------------------------------------
@@ -190,11 +192,38 @@ ggplot(dat.umap.dbl, aes(x = umap1, y = umap2, color = louvain)) + geom_point() 
 
 # Process fits ------------------------------------------------------------
 
-fits.out <- act.repress.coord.lst
-w.lst <- sapply(fits.out, function(x){
+# handle zeros optionally
+w.lst <- sapply(act.repress.coord.lst, function(x){
   return(x$w)
 })
 plot(hist(w.lst))  # more active than repressive? Why is that? 
+
+if (args$RemoveBadMixings){
+  print("Number of cells in model before removing bad mixings:")
+  print(length(act.repress.coord.lst))
+
+  cells.remove.i <- which(w.lst <= 0.01 | w.lst >= 0.99)
+  cells.remove <- names(act.repress.coord.lst)[cells.remove.i]
+  act.repress.coord.removed.lst <- list()
+  for (jcell in cells.remove){
+    print(paste("Removing", jcell, "because w=", w.lst[[jcell]]))
+    act.repress.coord.removed.lst[[jcell]] <- act.repress.coord.lst[[jcell]]
+    act.repress.coord.lst[[jcell]] <- NULL
+  }
+  print("Number of cells in model after removing bad mixings:")
+  print(length(act.repress.coord.lst))
+
+  # remove cells from raw counts
+  cells.keep <- names(act.repress.coord.lst)
+  print("Dim of raw count mat before bad mixings:")
+  print(dim(count.mat.dbl))
+  count.mat.dbl <- count.mat.dbl[, cells.keep]
+  print("Dim of raw count mat after bad mixings:")
+  print(dim(count.mat.dbl))
+}
+
+# process fits
+fits.out <- act.repress.coord.lst
 
 out.dat <- data.frame(cell = names(w.lst), w = w.lst, stringsAsFactors = FALSE)
 out.dat$experi <- sapply(as.character(out.dat$cell), function(x) paste(strsplit(x, "_")[[1]][1:2], collapse = "_"))
@@ -573,3 +602,11 @@ saveRDS(x.repress.mat.clean, file = outf.unmixedmat.repress)
 
 print(x.active.mat.clean[1:5, 1:5])
 print(x.repress.mat.clean[1:5, 1:5])
+
+# Write bad cells to file
+if (args$RemoveBadMixings){
+  fwrite(data.frame(cell = names(w.lst)[cells.remove.i], w = w.lst[cells.remove.i]), file = outtxt.badcells)
+  save(cells.remove, act.repress.coord.removed.lst, file = outrdata.badcells)
+}
+
+

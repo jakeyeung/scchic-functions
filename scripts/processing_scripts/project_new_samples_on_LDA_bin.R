@@ -36,6 +36,8 @@ parser$add_argument("-b", "--binarizemat", action="store_true", default=FALSE,
                         help="Binarize matrix")
 parser$add_argument("-v", "--verbose", action="store_true", default=FALSE,
                         help="Print extra output [default]")
+parser$add_argument("--RemoveEmptyCells", action="store_true", default=FALSE,
+                        help="Remove cells with zero reads. Means mixings were either 0 or 1")
                                         
 # get command line options, if help option encountered print help and exit,
 # otherwise if options not found on command line then set defaults, 
@@ -75,6 +77,15 @@ if (endsWith(args$inmat, ".rds")){
     load(args$inmat, v=T)  # count.dat$counts
 }
 
+if (args$RemoveEmptyCells){
+  # check size of cells, remove ones that are zero??
+  print("Number of cells before filtering:")
+  print(ncol(count.dat$counts))
+  cells.keep <- which(colSums(count.dat$counts) > 0)
+  print("Number of cells after filtering:")
+  count.dat$counts <- count.dat$counts[, cells.keep]
+  print(ncol(count.dat$counts))
+}
 assertthat::assert_that(class(count.dat$counts) == "dgCMatrix" | class(count.dat$counts) == "matrix")
 
 if (args$binarizemat){
@@ -84,6 +95,7 @@ if (args$binarizemat){
 }
 
 count.mat.proj <- count.dat$counts
+
 
 print("Projecting new samples onto trained LDA")
 system.time(
