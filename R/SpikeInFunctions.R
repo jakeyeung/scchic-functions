@@ -34,7 +34,7 @@ ReadChrReads <- function(inf, sort.rnames = TRUE, add.chromo = FALSE){
 
 
 FitGlmRowSpikeins <- function(input.dat, return.fit.obj = FALSE){
-  jfit.glm <- glm(formula = genecounts ~ log(ncells) + offset(log(spikeincounts)), data = input.dat, family = poisson)
+  jfit.glm <- glm(formula = genecounts ~ ncells + offset(log(spikeincounts)), data = input.dat, family = poisson)
   if (return.fit.obj){
     return(jfit.glm)
   }
@@ -48,7 +48,7 @@ FitGlmRowSpikeins <- function(input.dat, return.fit.obj = FALSE){
 }
 
 FitGlmRowChromocounts <- function(input.dat, return.fit.obj = FALSE){
-  jfit.glm <- glm(formula = genecounts ~ log(ncells) + offset(log(chromocounts)), data = input.dat, family = poisson)
+  jfit.glm <- glm(formula = genecounts ~ ncells + offset(log(chromocounts)), data = input.dat, family = poisson)
   if (return.fit.obj){
     return(jfit.glm)
   }
@@ -63,7 +63,7 @@ FitGlmRowChromocounts <- function(input.dat, return.fit.obj = FALSE){
 
 
 FitNormCountsToNcells.lm <- function(input.dat, return.fit.obj = FALSE){
-  jfit <- lm(formula = log(chromocounts / spikeinconc) ~ log(ncells), data = input.dat)
+  jfit <- lm(formula = log(chromocounts / spikeinconc) ~ ncells, data = input.dat)
   if (return.fit.obj){
     return(jfit)
   }
@@ -78,7 +78,7 @@ FitNormCountsToNcells.lm <- function(input.dat, return.fit.obj = FALSE){
 
 FitNormCountsToNcells.lm <- function(input.dat, return.fit.obj = FALSE){
   # jfit <- lm(formula = log(chromocounts / spikeinconc) ~ ncells, data = input.dat)
-  jfit <- lm(formula = log(chromocounts / spikeincounts) ~ log(ncells), data = input.dat)
+  jfit <- lm(formula = log(chromocounts / spikeincounts) ~ ncells, data = input.dat)
   if (return.fit.obj){
     return(jfit)
   }
@@ -92,7 +92,7 @@ FitNormCountsToNcells.lm <- function(input.dat, return.fit.obj = FALSE){
 }
 
 FitNormCountsToNcells.lm.naive <- function(input.dat, return.fit.obj = FALSE){
-  jfit <- lm(formula = log(chromocounts) ~ log(ncells), data = input.dat)
+  jfit <- lm(formula = log(chromocounts) ~ ncells, data = input.dat)
   # jfit <- lm(formula = log(chromocounts) ~ ncells, data = input.dat)
   if (return.fit.obj){
     return(jfit)
@@ -108,7 +108,7 @@ FitNormCountsToNcells.lm.naive <- function(input.dat, return.fit.obj = FALSE){
 
 
 FitNormCountsToNcells.glm <- function(input.dat, return.fit.obj = FALSE){
-  jfit.glm <- glm(formula = chromocounts ~ log(ncells) + offset(log(spikeincounts)), data = input.dat, family = poisson)
+  jfit.glm <- glm(formula = chromocounts ~ ncells + offset(log(spikeincounts)), data = input.dat, family = poisson)
   if (return.fit.obj){
     return(jfit.glm)
   }
