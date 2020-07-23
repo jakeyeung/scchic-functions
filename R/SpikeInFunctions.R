@@ -34,7 +34,7 @@ ReadChrReads <- function(inf, sort.rnames = TRUE, add.chromo = FALSE){
 
 
 FitGlmRowSpikeins <- function(input.dat, return.fit.obj = FALSE){
-  jfit.glm <- glm(formula = genecounts ~ ncells + offset(log(spikeincounts)), data = input.dat, family = poisson)
+  jfit.glm <- glm(formula = genecounts ~ log(ncells) + offset(log(spikeincounts)), data = input.dat, family = poisson)
   if (return.fit.obj){
     return(jfit.glm)
   }
@@ -48,7 +48,7 @@ FitGlmRowSpikeins <- function(input.dat, return.fit.obj = FALSE){
 }
 
 FitGlmRowChromocounts <- function(input.dat, return.fit.obj = FALSE){
-  jfit.glm <- glm(formula = genecounts ~ ncells + offset(log(chromocounts)), data = input.dat, family = poisson)
+  jfit.glm <- glm(formula = genecounts ~ log(ncells) + offset(log(chromocounts)), data = input.dat, family = poisson)
   if (return.fit.obj){
     return(jfit.glm)
   }
