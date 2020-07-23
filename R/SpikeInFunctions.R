@@ -32,6 +32,97 @@ ReadChrReads <- function(inf, sort.rnames = TRUE, add.chromo = FALSE){
 
 
 
+
+FitGlmRowSpikeins <- function(input.dat, return.fit.obj = FALSE){
+  jfit.glm <- glm(formula = genecounts ~ ncells + offset(log(spikeincounts)), data = input.dat, family = poisson)
+  if (return.fit.obj){
+    return(jfit.glm)
+  }
+  jslope.glm.ln <- coefficients(jfit.glm)[["ncells"]]
+  jslope.pval.glm <- summary(jfit.glm)$coefficients[, "Pr(>|z|)"][["ncells"]]
+  jslope.se.glm <- summary(jfit.glm)$coefficients[, "Std. Error"][["ncells"]]
+  jfit.dat <- data.frame(slope.ln = jslope.glm.ln, slope = jslope.glm.ln / log(2), pval = jslope.pval.glm, slope.se.ln = jslope.se.glm, slope.se = jslope.se.glm / log(2), stringsAsFactors = FALSE)
+  if (!return.fit.obj){
+    return(jfit.dat)
+  }
+}
+
+FitGlmRowChromocounts <- function(input.dat, return.fit.obj = FALSE){
+  jfit.glm <- glm(formula = genecounts ~ ncells + offset(log(chromocounts)), data = input.dat, family = poisson)
+  if (return.fit.obj){
+    return(jfit.glm)
+  }
+  jslope.glm.ln <- coefficients(jfit.glm)[["ncells"]]
+  jslope.pval.glm <- summary(jfit.glm)$coefficients[, "Pr(>|z|)"][["ncells"]]
+  jslope.se.glm <- summary(jfit.glm)$coefficients[, "Std. Error"][["ncells"]]
+  jfit.dat <- data.frame(slope.ln = jslope.glm.ln, slope = jslope.glm.ln / log(2), pval = jslope.pval.glm, slope.se.ln = jslope.se.glm, slope.se = jslope.se.glm / log(2), stringsAsFactors = FALSE)
+  if (!return.fit.obj){
+    return(jfit.dat)
+  }
+}
+
+
+FitNormCountsToNcells.lm <- function(input.dat, return.fit.obj = FALSE){
+  jfit <- lm(formula = log(chromocounts / spikeinconc) ~ log(ncells), data = input.dat)
+  if (return.fit.obj){
+    return(jfit)
+  }
+  jslope <- coefficients(jfit)[["ncells"]]
+  jslope.pval <- summary(jfit)$coefficients[, "Pr(>|t|)"][["ncells"]]
+  jslope.se <- summary(jfit)$coefficients[, "Std. Error"][["ncells"]]
+  jfit.dat <- data.frame(slope.ln = jslope, slope = jslope / log(2), pval = jslope.pval, slope.se.ln = jslope.se, slope.se = jslope.se / log(2), stringsAsFactors = FALSE)
+  if (!return.fit.obj){
+    return(jfit.dat)
+  }
+}
+
+FitNormCountsToNcells.lm <- function(input.dat, return.fit.obj = FALSE){
+  # jfit <- lm(formula = log(chromocounts / spikeinconc) ~ ncells, data = input.dat)
+  jfit <- lm(formula = log(chromocounts / spikeincounts) ~ log(ncells), data = input.dat)
+  if (return.fit.obj){
+    return(jfit)
+  }
+  jslope <- coefficients(jfit)[["ncells"]]
+  jslope.pval <- summary(jfit)$coefficients[, "Pr(>|t|)"][["ncells"]]
+  jslope.se <- summary(jfit)$coefficients[, "Std. Error"][["ncells"]]
+  jfit.dat <- data.frame(slope.ln = jslope, slope = jslope / log(2), pval = jslope.pval, slope.se.ln = jslope.se, slope.se = jslope.se / log(2), stringsAsFactors = FALSE)
+  if (!return.fit.obj){
+    return(jfit.dat)
+  }
+}
+
+FitNormCountsToNcells.lm.naive <- function(input.dat, return.fit.obj = FALSE){
+  jfit <- lm(formula = log(chromocounts) ~ log(ncells), data = input.dat)
+  # jfit <- lm(formula = log(chromocounts) ~ ncells, data = input.dat)
+  if (return.fit.obj){
+    return(jfit)
+  }
+  jslope <- coefficients(jfit)[["ncells"]]
+  jslope.pval <- summary(jfit)$coefficients[, "Pr(>|t|)"][["ncells"]]
+  jslope.se <- summary(jfit)$coefficients[, "Std. Error"][["ncells"]]
+  jfit.dat <- data.frame(slope.ln = jslope, slope = jslope / log(2), pval = jslope.pval, slope.se.ln = jslope.se, slope.se = jslope.se / log(2), stringsAsFactors = FALSE)
+  if (!return.fit.obj){
+    return(jfit.dat)
+  }
+}
+
+
+FitNormCountsToNcells.glm <- function(input.dat, return.fit.obj = FALSE){
+  jfit.glm <- glm(formula = chromocounts ~ log(ncells) + offset(log(spikeincounts)), data = input.dat, family = poisson)
+  if (return.fit.obj){
+    return(jfit.glm)
+  }
+  jslope.glm.ln <- coefficients(jfit.glm)[["ncells"]]
+  jslope.pval.glm <- summary(jfit.glm)$coefficients[, "Pr(>|z|)"][["ncells"]]
+  jslope.se.glm <- summary(jfit.glm)$coefficients[, "Std. Error"][["ncells"]]
+  jfit.dat <- data.frame(slope.ln = jslope.glm.ln, slope = jslope.glm.ln / log(2), pval = jslope.pval.glm, slope.se.ln = jslope.se.glm, slope.se = jslope.se.glm / log(2), stringsAsFactors = FALSE)
+  if (!return.fit.obj){
+    return(jfit.dat)
+  }
+}
+
+
+
 GetChromoCounts <- function(inf, spikeinchromo = "J02459.1"){
   
   dat <- ReadChrReads(inf, add.chromo = FALSE)
