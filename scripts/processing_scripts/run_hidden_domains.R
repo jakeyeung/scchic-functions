@@ -52,5 +52,5 @@ if ( args$verbose ) {
 }
 
 # returns nothing?
-hiddenDomains(treat.bin.file = args$infile, control.bin.file=NULL,  min.prob=args$minprob, max.read.count = args$maxreadcount, min.read.count = args$minreadcount, out.file.name = args$outfile, chr.names=args$chromonames)
+hiddenDomains(treat.bin.file = args$infile, control.bin.file=NULL,  min.prob=args$minprob, max.read.count = args$maxreadcount, min.read.count = args$minreadcount, out.file.name = args$outfile, chr.names=args$chromonames, normalize=FALSE)
 
