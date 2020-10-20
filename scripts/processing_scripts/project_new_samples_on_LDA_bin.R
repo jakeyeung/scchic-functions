@@ -38,6 +38,8 @@ parser$add_argument("-v", "--verbose", action="store_true", default=FALSE,
                         help="Print extra output [default]")
 parser$add_argument("--RemoveEmptyCells", action="store_true", default=FALSE,
                         help="Remove cells with zero reads. Means mixings were either 0 or 1")
+parser$add_argument("--MatchRowsPadZeros", action="store_true", default=FALSE,
+                        help="Match rows and pad zeros for rows that are missing")
                                         
 # get command line options, if help option encountered print help and exit,
 # otherwise if options not found on command line then set defaults, 
@@ -92,6 +94,38 @@ if (args$binarizemat){
   print(paste('Max count before binarizing', max(count.dat$counts)))
   count.dat$counts <- BinarizeMatrix(count.dat$counts)
   print(paste('Max count after binarizing', max(count.dat$counts)))
+}
+
+if (args$MatchRowsPadZeros){
+
+  print("Nterms mat dim:")
+  print(length(out.objs$out.lda@terms))
+
+  print("Input mat dim before:")
+  print(dim(count.dat$counts))
+
+  rnames.orig <- out.objs$out.lda@terms
+
+  rows.filt1 <- rownames(count.dat$counts) %in% rnames.orig
+  mat.filt.forproj1 <- count.dat$counts[rows.filt1, ]
+
+  # # Match rows 
+  # rnames.common <- intersect(rnames.orig, rownames(count.dat$counts))
+  # assertthat::assert_that(length(rnames.common) > 0)
+  # mat.filt.forproj1 <- count.dat$counts[rnames.common, ]
+  
+  # pad zeros
+  rnames.add <- rnames.orig[!rnames.orig %in% rownames(count.dat$counts)]
+  mat.add <- matrix(data = 0, nrow = length(rnames.add), ncol = ncol(mat.filt.forproj1), dimnames = list(rnames.add, colnames(mat.filt.forproj1)))
+  mat.filt.forproj <- Matrix(rbind(mat.filt.forproj1, mat.add), sparse = TRUE)
+  # reearrange rows
+  mat.filt.forproj <- mat.filt.forproj[rnames.orig, ]
+  count.dat$counts <- mat.filt.forproj
+  print("Input mat dim after:")
+  print(dim(count.dat$counts))
+
+  print("Range of values input mat:")
+  print(range(count.dat$counts))
 }
 
 count.mat.proj <- count.dat$counts
