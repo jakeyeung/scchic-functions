@@ -108,9 +108,11 @@ def clusterJob(path, wmfile, wmname, fastafile, outputDir, cutoffDir, param_file
         outf.write('\n'.join([
             "#!/bin/bash",
             "#SBATCH --nodes=1",
-            "#SBATCH --mem=1G",
+            "#SBATCH --ntasks=1",
+            "#SBATCH --mem-per-cpu=8G",
             "#SBATCH --job-name=MOTEVO_%s" % wmname,
-            "#SBATCH --time=0:10:00",
+            "#SBATCH --time=0:40:00",
+            "#SBATCH --error=%s/%s.err" % (param_dir, wmname),
             "#SBATCH --output=%s/%s.out" % (param_dir, wmname),
             "",
             ]))

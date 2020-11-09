@@ -54,8 +54,8 @@ parser$add_argument('-outprefix', metavar='OUTPREFIX include dir',
                                             help='Output prefix for output .RData and .pdf objects')
 parser$add_argument('-annotfile', metavar='CSVFILE', 
                                             help='Tab-delimited file with columns cell and cluster which defines cells into each cluster')
-parser$add_argument('-topicskeep', metavar='List of numbers', nargs = "+",
-                                            help='list of topics to keep (prefixes add later? e.g. -topicskeep 1 2 3 4)')
+# parser$add_argument('-topicskeep', metavar='List of numbers', nargs = "+",
+#                                             help='list of topics to keep (prefixes add later? e.g. -topicskeep 1 2 3 4)')
 parser$add_argument('-mark', metavar='HistoneMarkName', 
                                             help='Name of histone mark')
 parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
@@ -79,6 +79,7 @@ jsep <- ""  # separation between topic and number
 dat.annot <- fread(args$annotfile)
 
 topics.keep <- unique(dat.annot$cluster)
+topics.keep <- topics.keep[!is.na(topics.keep)]
 names(topics.keep) <- topics.keep
 
 # topics.keep <- paste("topic", args$topicskeep, sep = jsep)
@@ -131,11 +132,21 @@ dat.impute.log <- log2(t(tm.result$topics %*% tm.result$terms))
 (jchromos <- paste("chr", seq(19), sep = ""))
 dat.var <- CalculateVarAll(dat.impute.log, jchromos)
 
+print("Check datumaplong and datvar")
+print(head(dat.umap.long))
+print(head(dat.var))
 dat.umap.long <- left_join(dat.umap.long, dat.var)
+
+print("Check datumaplong again")
+print(head(dat.umap.long))
+dat.umap.long.merge.tmp <- left_join(dat.umap.long, dat.annot %>% dplyr::select(c(cell, cluster)))
 
 dat.umap.long$mark <- jmark
 
 m.louv <- ggplot(dat.umap.long, aes(x = umap1, y = umap2, color = louvain)) + geom_point() + theme_bw() + theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+  scale_color_manual(values = cbPalette) + facet_wrap(~plate) + ggtitle(jmark)
+
+m.cluster <- ggplot(dat.umap.long.merge.tmp, aes(x = umap1, y = umap2, color = cluster)) + geom_point() + theme_bw() + theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
   scale_color_manual(values = cbPalette) + facet_wrap(~plate) + ggtitle(jmark)
 
 m.var <- ggplot(dat.umap.long, aes(x = umap1, y = umap2, color = cell.var.within.sum.norm)) + geom_point() + theme_bw() + 
@@ -150,7 +161,7 @@ m.var <- ggplot(dat.umap.long, aes(x = umap1, y = umap2, color = cell.var.within
 
 pdf(outpdf, useDingbats = FALSE)
 
-
+print(m.cluster)
 print(m.louv)
 print(m.var)
 
@@ -160,7 +171,7 @@ par(mfrow=c(1,1), mar=c(5.1, 4.1, 4.1, 2.1), mgp=c(3, 1, 0), las=0)
 
 mm.celltype.lst <- lapply(topics.keep, function(jtopic){
   print(jtopic)
-  cells.keep <- subset(dat.annot, cluster == jtopic)
+  cells.keep <- subset(dat.annot, cluster == jtopic)$cell
   # tvec.raw <- sort(tm.result$topics[, jtopic])
   # # transform
   # tvec <- log(tvec.raw / (1 - tvec.raw))
@@ -182,14 +193,14 @@ mm.celltype.lst <- lapply(topics.keep, function(jtopic){
   # cells.keep <- xcells
   m.check <- PlotXYWithColor(dat.umap.long %>% mutate(is.celltype = cell %in% cells.keep), xvar = "umap1", yvar = "umap2", cname = "is.celltype", jtitle = paste(jtopic, jthres), cont.color = FALSE, col.palette = cbPalette, use.ggrastr=FALSE)
   print(m.check)
-
-  return(list(topic = jtopic, celltype = cells.keep))
+  return(list(topic = jtopic, cells.keep = cells.keep))
+  # return(list(topic = jtopic, topic.weight = tvec.raw.filt, celltype = xcells, mm = mm, threshold = xline))
 })
 
 celltypes <- lapply(names(mm.celltype.lst), function(ctype){
-  data.frame(cluster = ctype, cell = mm.celltype.lst[[ctype]]$celltype,
+  data.frame(cluster = ctype, cell = mm.celltype.lst[[ctype]]$cells.keep,
              topic = mm.celltype.lst[[ctype]]$topic,
-             topic.weight = mm.celltype.lst[[ctype]]$topic.weight, stringsAsFactors = FALSE)
+             stringsAsFactors = FALSE)
 }) %>%
   bind_rows()
 
@@ -201,6 +212,10 @@ celltypes <- lapply(names(mm.celltype.lst), function(ctype){
 # assertthat::assert_that(!all(duplicated(celltypes.dedup)))
 celltypes.dedup <- celltypes
 
+print("Check celltypes datumap celltypes")
+print(head(celltypes))
+print(head(dat.umap.long))
+print(head(celltypes.dedup))
 dat.merge <- left_join(dat.umap.long, celltypes.dedup)
 
 dat.merge$plate <- sapply(dat.merge$cell, function(x) ClipLast(x, jsep = "_"))

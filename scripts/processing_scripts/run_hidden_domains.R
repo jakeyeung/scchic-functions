@@ -38,6 +38,8 @@ parser$add_argument('-minprob', metavar='Prob', type="double", default=0.6,
                                             help='Filters out HD less than minprob')
 parser$add_argument('-chromonames', metavar='space separated strings', nargs="+", default="mouse",
                                             help='Insert vector of chromonames. mouse or human also accepted')
+parser$add_argument("--NoNormalize", action="store_true", default=FALSE,
+                        help="Do not normalize. Default it normalizes (FALSE normalizes)")
 parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
                         help="Print extra output [default]")
                                         
@@ -52,5 +54,5 @@ if ( args$verbose ) {
 }
 
 # returns nothing?
-hiddenDomains(treat.bin.file = args$infile, control.bin.file=NULL,  min.prob=args$minprob, max.read.count = args$maxreadcount, min.read.count = args$minreadcount, out.file.name = args$outfile, chr.names=args$chromonames, normalize=FALSE)
+hiddenDomains(treat.bin.file = args$infile, control.bin.file=NULL,  min.prob=args$minprob, max.read.count = args$maxreadcount, min.read.count = args$minreadcount, out.file.name = args$outfile, chr.names=args$chromonames, normalize=args$NoNormalize)
 
