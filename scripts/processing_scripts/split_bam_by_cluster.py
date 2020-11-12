@@ -30,6 +30,22 @@ def reformat_header(header, add_prefix="chr"):
     new_header['SQ'] = new_contigs
     return pysam.AlignmentHeader.from_dict(new_header)
 
+def remove_prefix_header(header, prefix="chr"):
+    new_header = header.to_dict()
+    contigs = new_header['SQ']
+    new_contigs = []
+    for contig in contigs:
+        print("Before...")
+        print(contig['SN'])
+        contig['SN'] = contig['SN'].replace(prefix, '')
+        print("After...")
+        print(contig['SN'])
+        # input("Wait...")
+        # contig['SN'] = ''.join([prefix, contig['SN']])
+        new_contigs.append(contig)
+    new_header['SQ'] = new_contigs
+    return pysam.AlignmentHeader.from_dict(new_header)
+
 def scan_bam_get_sampnames(infile, tag="SM"):
     '''
     Read bam file and get sampnames
@@ -67,12 +83,16 @@ def main():
     parser.add_argument('--annot_no_colnames', action='store_true', help='Set if annot has no column name')
     parser.add_argument('-mapq', metavar="MAPQ value", required=True, default=40, type=int)
     parser.add_argument('--add_chr_prefix', action='store_true', help="Add chr prefix to chromosome name")
+    parser.add_argument('--remove_chr_prefix', action='store_true', help="Remove chr prefix from chromosome name")
     parser.add_argument('--overwrite', action='store_true', help="Does not check if bam files exists, will just write to file")
     parser.add_argument('--quiet', '-q', action='store_true',
                         help='Suppress some print statements')
     parser.add_argument('-logfile', '-l', metavar='LOGFILE', default = None,
                         help='Write arguments to logfile')
     args = parser.parse_args()
+
+    # assert args.add_chr_prefix is not True and args.remove_chr_prefix is not True
+    # assert args.add_chr_prefix != args.remove_chr_prefix
 
     # store command line arguments for reproducibility
     CMD_INPUTS = ' '.join(['python'] + sys.argv)    # easy printing later
@@ -153,15 +173,18 @@ def main():
     with pysam.AlignmentFile(args.infile, "rb") as inbam:
         if args.add_chr_prefix:
             new_header = reformat_header(inbam.header, add_prefix = "chr")
+        if args.remove_chr_prefix:
+            new_header = remove_prefix_header(inbam.header, prefix = "chr")
         for clstr in clstrs:
             tmppath = os.path.join(args.outdir, '.'.join([bname, clstr, "unsorted", "bam"]))
             outpath = os.path.join(args.outdir, '.'.join([bname, clstr, "sorted", "bam"]))
             unsorteddic[clstr] = tmppath
             sorteddic[clstr] = outpath
-            if not args.add_chr_prefix:
-                writebamdic[clstr] = pysam.AlignmentFile(tmppath, "wb", template = inbam)
-            else:
+            if args.add_chr_prefix or args.remove_chr_prefix:
+                print("Replacing header with new header")
                 writebamdic[clstr] = pysam.AlignmentFile(tmppath, "wb", header = new_header)
+            else:
+                writebamdic[clstr] = pysam.AlignmentFile(tmppath, "wb", template = inbam)
         for total_count, read in enumerate(inbam):
             if read.mapping_quality < args.mapq:
                 lowq_count += 1

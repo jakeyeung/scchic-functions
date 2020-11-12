@@ -47,6 +47,8 @@ parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
                         help="Print extra output [default]")
 parser$add_argument("--SkipPlots", action="store_true", default=FALSE,
                         help="Do not make plots, default FALSE")
+parser$add_argument("--SkipMeanVar", action="store_true", default=FALSE,
+                        help="Do not make plots, default FALSE")
                                         
 # get command line options, if help option encountered print help and exit,
 # otherwise if options not found on command line then set defaults, 
@@ -94,27 +96,29 @@ print(dim(count.mat))
 
 # Plot mean and variance --------------------------------------------------
 
-dat.meanvar <- data.frame(Sum = Matrix::rowSums(count.mat), 
-                          Mean = Matrix::rowMeans(count.mat),
-                          Var = apply(count.mat, 1, var),
-                          peak = rownames(count.mat),
-                          stringsAsFactors=FALSE)
-dat.meanvar <- dat.meanvar %>%
-  rowwise() %>%
-  mutate(CV = sqrt(Var) / Mean,
-         peaksize = GetPeakSize(peak))
+if (!args$SkipMeanVar){
+    dat.meanvar <- data.frame(Sum = Matrix::rowSums(count.mat), 
+                              Mean = Matrix::rowMeans(count.mat),
+                              Var = apply(count.mat, 1, var),
+                              peak = rownames(count.mat),
+                              stringsAsFactors=FALSE)
+    dat.meanvar <- dat.meanvar %>%
+      rowwise() %>%
+      mutate(CV = sqrt(Var) / Mean,
+             peaksize = GetPeakSize(peak))
 
-p1 <- ggplot(dat.meanvar, aes(x = peaksize)) + geom_density() + 
-  theme_bw() + theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    p1 <- ggplot(dat.meanvar, aes(x = peaksize)) + geom_density() + 
+      theme_bw() + theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
-p2 <- ggplot(dat.meanvar, aes(x = log10(Mean), y = log10(CV), size = peaksize)) + geom_point(alpha = 0.25) + 
-  theme_bw() + theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
-  geom_abline(slope = -0.5)
+    p2 <- ggplot(dat.meanvar, aes(x = log10(Mean), y = log10(CV), size = peaksize)) + geom_point(alpha = 0.25) + 
+      theme_bw() + theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+      geom_abline(slope = -0.5)
 
-p3 <- ggplot(dat.meanvar, aes(x = peaksize, y = Sum)) + geom_point(alpha = 0.1) +
-  theme_bw() + 
-  theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
-  scale_y_log10()
+    p3 <- ggplot(dat.meanvar, aes(x = peaksize, y = Sum)) + geom_point(alpha = 0.1) +
+      theme_bw() + 
+      theme(aspect.ratio=1, panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+      scale_y_log10()
+}
 
 
 # Run LDA on count matrix -------------------------------------------------
@@ -175,9 +179,11 @@ if (!args$SkipPlots){
       scale_color_viridis_c(direction = -1)
     print(m.louv)
     print(m.intrachrom)
-    print(p1)
-    print(p2)
-    print(p3)
+    if (!args$SkipMeanVar){
+        print(p1)
+        print(p2)
+        print(p3)
+    }
   dev.off()
 }
 

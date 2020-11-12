@@ -58,10 +58,14 @@ if ( args$verbose ) {
     print(args)
 }
 
+print("Reading input...")
 dat <- fread(args$infile, header=FALSE)
 if (ncol(dat) == 8){
   colnames(dat) <- c("chromo", "start", "end", "motif", "sitecount", "gene", "dist", "peak")
 }
+print("Reading input... done")
+
+print(head(dat))
 
 dat.sum <- dat %>% group_by(peak, motif) %>% summarise(nsites = length(sitecount), sitecount = sum(sitecount))
 
