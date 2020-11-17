@@ -22,11 +22,15 @@ InitGLMPCAfromLDA <- function(count.mat, tm.result, dat.var.merge, covar.cname =
   assertthat::assert_that(all(rownames(Y) == colnames(tm.result$terms)))
   
   # keep variable bins
-  bins.high.i <- as.data.frame(apply(tm.result$terms, MARGIN = 1, function(jcol) order(jcol, decreasing = TRUE)[1:bins.keep])) %>%
-    unlist()
-  
-  bins.high <- unique(rownames(Y)[bins.high.i])
-  
+  if (bins.keep > 0){
+    print(paste("Keeping only top bins bins.keep:", bins.keep))
+    bins.high.i <- as.data.frame(apply(tm.result$terms, MARGIN = 1, function(jcol) order(jcol, decreasing = TRUE)[1:bins.keep])) %>%
+      unlist()
+    bins.high <- unique(rownames(Y)[bins.high.i])
+  } else {
+    print(paste("Keeping all bins because bins.keep=", bins.keep))
+    bins.high <- colnames(tm.result$terms)
+  }
   Y.filt <- Y[bins.high, ]
   
   var.vec <- dat.var.merge[[covar.cname]]
