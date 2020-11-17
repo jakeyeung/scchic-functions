@@ -38,6 +38,8 @@ parser$add_argument('outfile', metavar='OUTFILE',
                                             help='Output matrix txt of imputed values')
 parser$add_argument('-keepNbins', metavar='N bins', type = 'integer', default=0, 
                                             help='Number of bins to keep for each topic')
+parser$add_argument('--AddChr', action="store_true", default=FALSE,
+                                            help='Add chr to front of rownames')
 parser$add_argument("--NoNormalize", action="store_true", 
                         help="Do not normalize matrix. If you do this you have to add an intercept in your model")
 parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
@@ -110,6 +112,16 @@ logodds.centered <- t(scale(t(logodds), center = TRUE, scale = FALSE))
 
 # make nice
 geneids <- sapply(rownames(logodds), function(x) strsplit(x, ";")[[1]][[1]])
+
+if (args$AddChr){
+    print("Adding chr:")
+    print("geneids before")
+    print(head(geneids))
+    geneids <- paste("chr", geneids, sep = "")
+    print("geneids after")
+    print(head(geneids))
+}
+
 logodds.out <- data.frame(Gene.ID = geneids, logodds, stringsAsFactors = FALSE)
 logodds.centered.out <- data.frame(Gene.ID = geneids, logodds.centered, stringsAsFactors = FALSE)
 
