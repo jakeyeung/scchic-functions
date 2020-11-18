@@ -35,7 +35,10 @@ parser$add_argument('-infpeaks', metavar='INFILE', help='LDA output')
 parser$add_argument('-outbase', metavar='OUTBASE', help='GLMPCA base output, will add .pdf and .RData to this outbase to make outf')
 parser$add_argument('-cname', metavar='COLNAME', default='cell.var.within.sum.norm.log2.CenteredAndScaled', help='Colname used to regress out')
 parser$add_argument('-bincutoff', metavar='BINCUTOFF', type = 'integer', help='Bin cutoff', default = 0)
-parser$add_argument('-binskeep', metavar='N', type = 'integer', help='Nuber of bins to keep for GLMPCA', default = 250)
+parser$add_argument('-niter', metavar='N', type = 'integer', help='Number of iterations', default = 1000)
+parser$add_argument('-tol', metavar='Float', type = 'double', help='Tolerance', default = 1e-8)
+parser$add_argument('-penalty', metavar='Float', type = 'double', help='Penalty of the fit', default = 1.5)
+parser$add_argument('-binskeep', metavar='N', type = 'integer', help='Nuber of bins to keep for GLMPCA. Set to 0 to keep all bins', default = 250)
 parser$add_argument('-chromos', metavar='SpaceSepString', help='Space separated string of chromosomes for calculating intrachr var', nargs='+')
 parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
                         help="Print extra output [default]")
@@ -64,11 +67,14 @@ winsorize <- args$winsorize
 # bincutoff <- 10000
 bincutoff <- args$bincutoff
 
-niter <- 1000
-jtol <- 1e-8
+# niter <- 1000
+niter <- args$niter
+# jtol <- 1e-8
+jtol <- args$tol
 jbins.keep <- args$binskeep
 # calculating var raw
-jpenalty <- 1.5
+# jpenalty <- 1.5
+jpenalty <- args$penalty
 
 # jchromos <- paste("chr", c(seq(19)), sep = "")
 jchromos <- args$chromos
@@ -114,7 +120,12 @@ jsettings$random_state <- 123
   # load raw counts from peaks 
   load(inf.peaks, v=T)
   count.mat.peaks <- as.matrix(count.mat)
+  # remove bins that have zero variance
+  genevars <- apply(count.mat.peaks, 1, var)
+  geneskeep <- rownames(count.mat.peaks)[which(genevars > 0)]
+  count.mat.peaks <- count.mat.peaks[geneskeep, ]
   tm.result.peaks <- AddTopicToTmResult(posterior(out.lda), jsep = "_")
+  tm.result.peaks$terms <- tm.result.peaks$terms[, geneskeep]
   
   # get distances
   peaks.all <- colnames(tm.result.peaks$terms)
