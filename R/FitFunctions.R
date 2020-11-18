@@ -3,7 +3,7 @@
 # File: ~/projects/scchic-functions/R/FitFunctions.R
 # 
 
-FitGlmRowClustersPlate <- function(jrow, cnames, dat.annots.filt.mark, ncuts.cells.mark, jbin = NULL, returnobj=FALSE){
+FitGlmRowClustersPlate <- function(jrow, cnames, dat.annots.filt.mark, ncuts.cells.mark, jbin = NULL, returnobj=FALSE, with.se = FALSE){
   # use Offset by size of library
   # https://stats.stackexchange.com/questions/66791/where-does-the-offset-go-in-poisson-negative-binomial-regression
   # fit GLM for a row of a sparse matrix, should save some space?
@@ -27,11 +27,30 @@ FitGlmRowClustersPlate <- function(jrow, cnames, dat.annots.filt.mark, ncuts.cel
   if (!returnobj){
     jsum <- anova(mnull.pois, m1.pois)
     pval <- pchisq(jsum$Deviance[[2]], df = jsum$Df[[2]], lower.tail = FALSE)
-    out.dat <- data.frame(pval = pval, 
-                          dev.diff = jsum$Deviance[[2]],
-                          df.diff = jsum$Df[[2]],
-                          t(as.data.frame(coefficients(m1.pois))), 
-                          stringsAsFactors = FALSE)
+    
+    if (!with.se){
+      out.dat <- data.frame(pval = pval, 
+                            dev.diff = jsum$Deviance[[2]],
+                            df.diff = jsum$Df[[2]],
+                            t(as.data.frame(coefficients(m1.pois))), 
+                            stringsAsFactors = FALSE)
+    } else {
+      estimates <- summary(m1.pois)$coefficients[, "Estimate"]
+      names(estimates) <- make.names(paste(names(estimates), ".Estimate", sep = ""))
+      stderrors <- summary(m1.pois)$coefficients[, "Std. Error"]
+      names(stderrors) <- make.names(paste(names(stderrors), ".StdError", sep = ""))
+      out.dat <- data.frame(pval = pval, 
+                            dev.diff = jsum$Deviance[[2]],
+                            df.diff = jsum$Df[[2]],
+                            t(as.data.frame(c(estimates, stderrors))), 
+                            stringsAsFactors = FALSE)
+    }
+    
+    # out.dat <- data.frame(pval = pval, 
+    #                       dev.diff = jsum$Deviance[[2]],
+    #                       df.diff = jsum$Df[[2]],
+    #                       t(as.data.frame(coefficients(m1.pois))), 
+    #                       stringsAsFactors = FALSE)
     if (!is.null(jbin)){
       out.dat$bin <- jbin
       rownames(out.dat) <- jbin
