@@ -62,8 +62,8 @@ GetRepBM <- function(experiname){
   } else if (grepl("rep2", experiname)){
     return("rep2")
   } else {
-    print("Neither rep2 nor rep3 in name: Returning rep2")
-    return("rep2")
+    print("Neither rep2 nor rep3 in name: Returning rep3")
+    return("rep3")
   }
 }
 
