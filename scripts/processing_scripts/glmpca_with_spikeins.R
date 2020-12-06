@@ -46,7 +46,7 @@ parser$add_argument('-infile', metavar='INFILE',
 parser$add_argument('-outfile', metavar='OUTFILE',
                     help='Output glmpca RData')
 parser$add_argument('-inspike', metavar='Input',
-                    help='RData containing dat.spikeins.mat object or .txt file with colnames Plate for batch, cuts_in_peak, cuts_total, spikein_cuts')
+                    help='RData containing dat.spikeins.mat object or .txt file with plate and cell as colname')
 parser$add_argument('-K', metavar='Dimensions', type = 'integer', default = 30,
                     help='Number of dimensions')
 parser$add_argument('-penalty', metavar='Penalization term', type = 'double', default = 1.0,
@@ -57,12 +57,16 @@ parser$add_argument('-minibatch', metavar='minibatch', default = 'none',
                     help='Minibatch: c("none", "stochastic", "memoized") default none')
 parser$add_argument('-optimizer', metavar='optimizer', default = 'fisher',
                     help='Optimizer: c("avagrad", "fisher") default none')
+parser$add_argument('-sizefactorcname', metavar='cname', default = 'none',
+                    help='Colname from metadata to take sizefactors, default none, which takes size factors from raw count mat')
+parser$add_argument('-platecname', metavar='cname', default = 'none',
+                    help='Colname from metadata to take plate. Use none to not account for plate effects')
 parser$add_argument('-tol', metavar='tolerance', default = 1e-4, type = 'double',
                     help='Tolerance default 1e-4')
 parser$add_argument('-topndevgenes', metavar='TopNGenesByDeviance', default = 0, type = 'integer',
                     help='Filter genes by top, default 0 takes all genes')
-parser$add_argument("--by_plate", action="store_true",
-                    help="Add design matrix by platement")
+# parser$add_argument("--by_plate", action="store_true",
+#                     help="Add design matrix by platement")
 parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
                     help="Print extra output [default]")
 
@@ -133,7 +137,12 @@ Y <- Y[which(rowSums(Y) > 0), ]
 
 spikeincounts.sub <- dat.spikeins.mat[colnames(Y), ]
 
-spikeincounts <- spikeincounts.sub$spikeincounts; names(spikeincounts) <- spikeincounts.sub$samp
+if (args$sizefactorcname == "none"){
+    spikeincounts <- colSums(Y); names(spikeincounts) <- colnames(Y)
+} else {
+    spikeincounts <- spikeincounts.sub$sizefactorcname; names(spikeincounts) <- spikeincounts.sub$cell
+}
+# spikeincounts <- spikeincounts.sub$spikeincounts; names(spikeincounts) <- spikeincounts.sub$samp
 
 assertthat::assert_that(ncol(Y) == length(spikeincounts))
 
@@ -164,25 +173,37 @@ if (args$topndevgenes > 0){
 print("Dim of Y after:")
 print(dim(Y))
 
-if (args$by_plate){
-    if (!"plate" %in% colnames(spikeincounts.sub)){
-        spikeincounts.sub <- spikeincounts.sub %>%
-            rowwise() %>%
-            mutate(plate = ClipLast(samp, jsep = "_"))
-    }
-    print(unique(spikeincounts.sub$plate))
-    if (length(unique(spikeincounts.sub$plate)) > 1){
-        X <- model.matrix(object = ~ plate, data = spikeincounts.sub)
+if (args$platecname == "none"){
+    X <- NULL
+} else {
+    if (length(unique(spikeincounts.sub[[args$platename]])) > 1){
+        X <- model.matrix(object = as.formula(paste0("~ ", platename)), data = spikeincounts.sub)
     }  else {
         print("Number of factors in 'plate' is only 1, setting to NULL")
         X <- NULL
     }
-} else {
-    X <- NULL
 }
+# if (args$by_plate){
+#     if (!"plate" %in% colnames(spikeincounts.sub)){
+#         spikeincounts.sub <- spikeincounts.sub %>%
+#             rowwise() %>%
+#             mutate(plate = ClipLast(samp, jsep = "_"))
+#     }
+#     print(unique(spikeincounts.sub$plate))
+#     if (length(unique(spikeincounts.sub$plate)) > 1){
+#         X <- model.matrix(object = ~ plate, data = spikeincounts.sub)
+#     }  else {
+#         print("Number of factors in 'plate' is only 1, setting to NULL")
+#         X <- NULL
+#     }
+# } else {
+#     X <- NULL
+# }
 
 print("Dimension of X")
 print(dim(X))
+
+# glm.inits <- InitGLMPCAfromLDA(count.mat.peaks, tm.result.peaks, dat.merge2, covar.cname = jcovar.cname, bins.keep = jbins.keep, do.log = FALSE, svd.on.Yinit = TRUE, use.orig.sz = TRUE)
 
 system.time(
   glmpcaout <- glmpca::glmpca(Y = Y, L = args$K, fam = "poi", sz = spikeincounts, X = X, minibatch = args$minibatch, optimizer = args$optimizer, 
