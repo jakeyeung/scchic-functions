@@ -6,7 +6,7 @@
 rm(list=ls())
 jstart <- Sys.time()
 
-InitGLMPCAfromLDA.plate <- function(count.mat, tm.result, dat.meta, plate.cname = "ncuts.var", bins.keep = 100, do.log = FALSE, svd.on.Yinit = TRUE, sz.cname = "none"){
+InitGLMPCAfromLDA.plate <- function(count.mat, tm.result, dat.meta, plate.cname = "ncuts.var", bins.keep = 100, do.log = FALSE, svd.on.Yinit = TRUE, sz.cname = "none", bins.keep.file = "none"){
 
   ntopics <- ncol(tm.result$topics)
   Y <- count.mat
@@ -126,6 +126,7 @@ parser$add_argument('-niter', metavar='N', type = 'integer', help='Number of ite
 parser$add_argument('-tol', metavar='Float', type = 'double', help='Tolerance', default = 1e-8)
 parser$add_argument('-penalty', metavar='Float', type = 'double', help='Penalty of the fit', default = 1.5)
 parser$add_argument('-binskeep', metavar='N', type = 'integer', help='Nuber of bins to keep for GLMPCA. Set to 0 to keep all bins', default = 250)
+parser$add_argument('-genesfile', metavar='INFILE', help='Input file with gene as column name for rows to keep. binskeep automatically set to 0', default = "none")
 parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
                         help="Print extra output [default]")
                                         
