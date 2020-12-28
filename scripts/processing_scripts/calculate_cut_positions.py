@@ -30,8 +30,12 @@ def main():
                         help='Bedfile containing location of TSS in column 2')
     parser.add_argument('-radius', metavar='Basepairs', type = int, default = 0,
                         help='Radius to record DS locations. If 0 will take column 2 and 3 as start and end. Otherwise takes column 2 as start, and start + radius as end')
+    parser.add_argument('-mapq', metavar='Int', type = int, default = 40,
+                        help='MAPQ filter, default 40')
     parser.add_argument('--quiet', '-q', action='store_true',
                         help='Suppress some print statements')
+    parser.add_argument('--r1only', action='store_true',
+                        help='Count r1 only')
     parser.add_argument('--logfile', '-l', metavar='LOGFILE', default = None,
                         help='Write arguments to logfile')
     args = parser.parse_args()
@@ -82,6 +86,7 @@ def main():
     # Calculate cut positions
     readsthrown = 0
     readstotal = 0
+    readsbadqual = 0
     with pysam.AlignmentFile(args.infile, "rb") as inbam, \
             gzip.open(outmat_path, "wt") as outmat, gzip.open(outsum_path, "wt") as outsum:
         outmatwriter = csv.writer(outmat, delimiter = "\t")
@@ -111,6 +116,17 @@ def main():
                 # input('debug...')
                 # assert indx >= 0 and indx <= len(countvec)
                 # print(indx)
+
+                # check quality
+                if read.is_duplicate:
+                    readsbadqual += 1
+                    continue
+                if read.mapping_quality < args.mapq:
+                    readsbadqual += 1
+                    continue
+                if not read.is_read1:
+                    readsbadqual += 1
+                    continue
                 countvec[indx] += 1
 
             # write row to output file and sumary
@@ -124,6 +140,7 @@ def main():
         outsum.close()
     print("Reads total:", readstotal)
     print("Reads thrown:", readsthrown)
+    print("Reads inside bed but bad quality (duplicate, mapq, or is not read1):", readsbadqual)
 
 
 if __name__ == '__main__':
