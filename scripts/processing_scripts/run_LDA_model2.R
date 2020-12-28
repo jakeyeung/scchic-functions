@@ -47,6 +47,8 @@ parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
                         help="Print extra output [default]")
 parser$add_argument("--SkipPlots", action="store_true", default=FALSE,
                         help="Do not make plots, default FALSE")
+parser$add_argument("--RemoveDupRows", action="store_true", default=FALSE,
+                        help="Remove duplicated rows, default FALSE")
 parser$add_argument("--SkipMeanVar", action="store_true", default=FALSE,
                         help="Do not make plots, default FALSE")
                                         
@@ -93,6 +95,24 @@ if (endsWith(inpath, ".rds")){
 }
 
 print(dim(count.mat))
+
+if (args$RemoveDupRows){
+  print("Removing dup rows")
+  rnames.all <- rownames(count.mat)
+  rnames.keep <- !duplicated(rnames.all)
+  dim(count.mat)
+  count.mat <- count.mat[rnames.keep, ]
+  print("Mat after removing dup rows")
+  dim(count.mat)
+
+  print("Removing dup cols")
+  cnames.all <- colnames(count.mat)
+  cnames.keep <- !duplicated(cnames.all)
+  dim(count.mat)
+  count.mat <- count.mat[, cnames.keep]
+  print("Mat after removing dup cols")
+  dim(count.mat)
+}
 
 # Plot mean and variance --------------------------------------------------
 
