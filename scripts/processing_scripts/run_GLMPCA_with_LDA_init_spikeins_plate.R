@@ -6,7 +6,7 @@
 rm(list=ls())
 jstart <- Sys.time()
 
-InitGLMPCAfromLDA.plate <- function(count.mat, tm.result, dat.meta, plate.cname = "ncuts.var", bins.keep = 100, do.log = FALSE, svd.on.Yinit = TRUE, sz.cname = "none", bins.keep.file = "none"){
+InitGLMPCAfromLDA.plate <- function(count.mat, tm.result, dat.meta, plate.cname = "ncuts.var", bins.keep = 100, do.log = FALSE, svd.on.Yinit = TRUE, sz.cname = "none", bins.keep.manual = "none"){
 
   ntopics <- ncol(tm.result$topics)
   Y <- count.mat
@@ -22,21 +22,40 @@ InitGLMPCAfromLDA.plate <- function(count.mat, tm.result, dat.meta, plate.cname 
 
   assertthat::assert_that(all(rownames(Y) == colnames(tm.result$terms)))
 
-  # keep variable bins
-  if (bins.keep > 0){
-    print(paste("Keeping only top bins bins.keep:", bins.keep))
-    bins.high.i <- as.data.frame(apply(tm.result$terms, MARGIN = 1, function(jcol) order(jcol, decreasing = TRUE)[1:bins.keep])) %>%
-      unlist()
-    bins.high <- unique(rownames(Y)[bins.high.i])
+  if (bins.keep.manual == "none"){
+    # keep variable bins
+    if (bins.keep > 0){
+      print(paste("Keeping only top bins bins.keep:", bins.keep))
+      bins.high.i <- as.data.frame(apply(tm.result$terms, MARGIN = 1, function(jcol) order(jcol, decreasing = TRUE)[1:bins.keep])) %>%
+        unlist()
+      bins.high <- unique(rownames(Y)[bins.high.i])
+    } else {
+      print(paste("Keeping all bins because bins.keep=", bins.keep))
+      bins.high <- colnames(tm.result$terms)
+    }
+    # bins.high.i <- as.data.frame(apply(tm.result$terms, MARGIN = 1, function(jcol) order(jcol, decreasing = TRUE)[1:bins.keep])) %>%
+    #   unlist()
+    # bins.high <- unique(rownames(Y)[bins.high.i])
   } else {
-    print(paste("Keeping all bins because bins.keep=", bins.keep))
-    bins.high <- colnames(tm.result$terms)
+      print("Taking bins manually...")
+    # take manually
+      bins.high.i <- rownames(Y) %in% unique(bins.keep.manual)
+      bins.high <- rownames(Y)[bins.high.i]
   }
-  # bins.high.i <- as.data.frame(apply(tm.result$terms, MARGIN = 1, function(jcol) order(jcol, decreasing = TRUE)[1:bins.keep])) %>%
-  #   unlist()
-  # bins.high <- unique(rownames(Y)[bins.high.i])
 
+  print("Dim before")
+  print(dim(Y))
   Y.filt <- Y[bins.high, ]
+  print("Dim after")
+  print(dim(Y.filt))
+
+  # remove empty cells
+  print("Removing empty cells dim before")
+  print(dim(Y.filt))
+  empty.cells <- colSums(Y.filt) == 0
+  Y.filt <- Y.filt[, !empty.cells]
+  print("Removing empty cells dim after")
+  print(dim(Y.filt))
 
   if (sz.cname == "none"){
     size.factor <- colSums(Y.filt)
@@ -155,7 +174,18 @@ if (endsWith(x = args$infmeta, suffix = ".RData")){
   stop("Not RData, rds of txt")
 }
 dat.meta <- dat.spikeins.mat
+ 
+if (args$genesfile == "none"){
+  jbins.keep.manual <- "none"
+} else {
+  jbins.keep.dat <- fread(args$genesfile)  # expect gene column name
+  jbins.keep.manual <- unique(jbins.keep.dat$gene)
+}
 
+print(paste("Found", length(jbins.keep.manual), "genes to filter"))
+print(head(jbins.keep.manual))
+
+assertthat::assert_that(length(jbins.keep.manual) > 0)
 
 # Constants ---------------------------------------------------------------
 
@@ -290,8 +320,10 @@ jsettings$random_state <- 123
   # set up GLMPCA
   
   print("Running GLMPCA")
+
+
   
-  glm.inits <- InitGLMPCAfromLDA.plate(count.mat = count.mat.peaks, tm.result = tm.result.peaks, dat.meta = dat.meta, plate.cname = jcovar.cname, bins.keep = jbins.keep, do.log = FALSE, svd.on.Yinit = TRUE, sz.cname = jsize.cname)
+  glm.inits <- InitGLMPCAfromLDA.plate(count.mat = count.mat.peaks, tm.result = tm.result.peaks, dat.meta = dat.meta, plate.cname = jcovar.cname, bins.keep = jbins.keep, do.log = FALSE, svd.on.Yinit = TRUE, sz.cname = jsize.cname, bins.keep.manual = jbins.keep.manual)
 
   # set up X independently 
   
