@@ -4,6 +4,7 @@
 # Annotation functions
 
 
+
 AnnotateRegionToGene <- function(peaks, chr.exclude = c("chr20", "chr21")){
   # annotate regions?
   require(JFuncs)

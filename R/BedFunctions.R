@@ -20,3 +20,17 @@ FilterBinsByBlacklist <- function(rnames.all.common, blfile){
 }
 
 
+GetBedFromCoords <- function(coords, add.chr = FALSE, strip.chr = FALSE){
+  dat.bed <- data.frame(Chr = sapply(coords, JFuncs::GetChromo),
+                        Start = sapply(coords, JFuncs::GetStart, returnAsInt = TRUE),
+                        End = sapply(coords, JFuncs::GetEnd, returnAsInt = TRUE),
+                        Name = coords,
+                        stringsAsFactors = FALSE)
+  if (strip.chr){
+    dat.bed$Chr <- gsub("^chr", "", dat.bed$Chr)
+  }
+  if (add.chr){
+    dat.bed$Chr <- paste("chr", dat.bed$Chr, sep = "")
+  }
+  return(dat.bed)
+}
