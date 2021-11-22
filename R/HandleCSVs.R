@@ -3,6 +3,7 @@
 # File: ~/projects/scchicFuncs/R/HandleCSVs.R
 #
 
+
 # GrepAndWriteMat <- function(mat.tmp, jgrp, jgrp.name, outf){
 #   cols.i <- grepl(jgrp, colnames(mat.tmp))
 #   mat.tmp.filt <- mat.tmp[, cols.i]
@@ -16,7 +17,7 @@
 #   return(mat.tmp.filt)
 # }
 
-LoadCellAnnotsEtOH.MorePlates <- function(annots.dir = "/home/jyeung/hub_oudenaarden/jyeung/data/dblchic/from_mflorescu/annotations_EtOH", 
+LoadCellAnnotsEtOH.MorePlates <- function(annots.dir = "/home/jyeung/hub_oudenaarden/jyeung/data/dblchic/from_mflorescu/annotations_EtOH",
                                           jmarks.annot = c("K27", "K9", "K27_K9")){
   names(jmarks.annot) <- jmarks.annot
   annots <- lapply(jmarks.annot, function(jmark.annot){

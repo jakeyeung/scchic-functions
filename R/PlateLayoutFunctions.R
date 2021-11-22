@@ -1,7 +1,18 @@
 # Jake Yeung
 # Date of Creation: 2020-09-13
 # File: ~/projects/scchic-functions/R/PlateLayoutFunctions.R
-# 
+#
+
+
+
+GetPlateWellFromRowCol <- function(jrow, jcol){
+  # convert row (1 to 16 to A to P) to get A1 or A2 etc
+  # assertthat::assert_that(is.integer(jrow))
+  # assertthat::assert_that(is.integer(jcol))
+  rowletter <- toupper(letters)[jrow]
+  wellname <- paste0(rowletter, jcol)
+  return(wellname)
+}
 
 
 
@@ -72,7 +83,7 @@ AnnotateSortFromLayout.dat <- function(jdat){
   # expects cell in colname
   jdat <- bind_rows(jdat) %>%
     rowwise() %>%
-    mutate(experi = ClipLast(cell, jsep = "_"), 
+    mutate(experi = ClipLast(cell, jsep = "_"),
            plate = as.numeric(strsplit(experi, "-")[[1]][[6]]),
            rowcoord = AddPlateCoordinates(cell)$rowcoord,
            colcoord = AddPlateCoordinates(cell)$colcoord,
@@ -87,7 +98,7 @@ AnnotateSortFromLayoutBMall <- function(plate, rowcoord, colcoord, jrep, jmark){
   assertthat::assert_that(is.numeric(rowcoord))
   assertthat::assert_that(is.numeric(colcoord))
   # assertthat::assert_that(is.numeric(jrep))
-  
+
   if (jrep == "rep3"){
     ctype <- AnnotateSortFromLayout(plate = plate, rowcoord = rowcoord, colcoord = colcoord)
   } else if (jrep == "rep2"){
@@ -161,7 +172,7 @@ AnnotateSortFromLayout <- function(plate, rowcoord, colcoord){
     } else if (colcoord >= 19 & colcoord <= 24){
       ctype <- "LSK"
     }
-    
+
   } else if (plate >= 8 & plate <= 13){
     if (colcoord >= 1 & colcoord <= 12){
       ctype <- "Unenriched"

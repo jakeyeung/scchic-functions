@@ -1,4 +1,18 @@
 
+
+cbind.fill.lst <- function(mats.lst, all.rnames, fill = 0){
+  mats.lst.filled <- lapply(mats.lst, function(mat.tmp){
+    missing.rnames <- all.rnames[!all.rnames %in% rownames(mat.tmp)]
+    mat.tmp.to.fill <- matrix(data = fill, nrow = length(missing.rnames), ncol = ncol(mat.tmp), dimnames = list(missing.rnames, colnames(mat.tmp)))
+    mat.tmp.bind <- rbind(mat.tmp, mat.tmp.to.fill)
+    mat.tmp.bind <- mat.tmp.bind[all.rnames, ]
+    return(mat.tmp.bind)
+  })
+  return(do.call(cbind, mats.lst.filled))
+}
+
+
+
 GetCondFromSamp.blood <- function(samp, mark){
   if (mark == "H3K4me1"){
     wt.plates <- c("B6-13W1-BM-H3K4me1", "PZ-ChIC-Bl6-BM-H3K4me1-Index")
@@ -20,20 +34,20 @@ GetCondFromSamp.blood <- function(samp, mark){
     print(paste(mark, "not yet coded"))
   }
   blood.plates <- c("-blood-")
-  
+
   wt.plates.grep <- paste(wt.plates, collapse = "|")
   linneg.plates.grep <- paste(linneg.plates, collapse = "|")
   hsc.plates.grep <- paste(hsc.plates, collapse = "|")
   blood.plates.grep <- paste(blood.plates, collapse = "|")
-  
+
   is.wt <- grepl(wt.plates.grep, samp)
   is.linneg <- grepl(linneg.plates.grep, samp)
   is.hsc <- grepl(hsc.plates.grep, samp)
   is.blood <- grepl(blood.plates.grep, samp)
-  
+
   bool.vec <- c(is.wt, is.linneg, is.hsc, is.blood)
   assertthat::assert_that(sum(bool.vec) == 1)
-  
+
   indx <- which.max(bool.vec)
   if (indx == 1){
     cond <- "Unenriched"
@@ -76,7 +90,7 @@ GetCondFromSamp <- function(samp, mark = "H2K4me1"){
   is.hsc <- grepl(hsc.plates.grep, samp)
   bool.vec <- c(is.wt, is.linneg, is.hsc)
   assertthat::assert_that(sum(bool.vec) == 1)
-  
+
   indx <- which.max(bool.vec)
   if (indx == 1){
     cond <- "Unenriched"
@@ -249,3 +263,5 @@ GetEnd <- function(x){
   # chrY:90799295-90803056 -> 90799295
   return(strsplit(strsplit(x, ":")[[1]][[2]], "-")[[1]][[2]])
 }
+
+
