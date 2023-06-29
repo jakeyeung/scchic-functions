@@ -1,3 +1,15 @@
+LabelMetadataByCtype <- function(dat.umap.init){
+  dat.umap <- dat.umap.init %>%
+    rowwise() %>%
+    mutate(indx = as.numeric(strsplit(cell, split = "_")[[1]][[2]]),
+           cellindx = paste0("cell", indx),
+           experi = ClipLast(cell, jsep = "_"),
+           platerow = GetPlateCoord2(cell = cellindx, platecols = 24, is.zero.base = FALSE)[[1]],
+           platecol = GetPlateCoord2(cell = cellindx, platecols = 24, is.zero.base = FALSE)[[2]],
+           batch = ifelse(grepl("PZ-sortChIC-BM-SL", experi), "New", "Old"),
+           Batch = ifelse(batch == "New", strsplit(experi, split = "-")[[1]][[4]], "Old"),
+           ctype = ifelse(Batch == "Old", ctype, BatchColumn2Ctype(Batch = Batch, Column = platecol, Row = platerow)))
+}
 
 GetPlateCoord2 <- function(cell, platecols = 24, is.zero.base = FALSE){
   # cell0 -> 1,1

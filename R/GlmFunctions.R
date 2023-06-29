@@ -4,6 +4,28 @@
 # Mostly stolen from Will Townes 
 # https://github.com/willtownes/scrna2019/blob/master/util/functions.R
 
+Norm<-function(v){sqrt(sum(v^2))}
+
+ColNorms<-function(x){
+  #compute the L2 norms of columns of a matrix
+  apply(x,2,Norm)
+}
+
+
+l2norms.frac <- function(factors){
+  l2norms <- ColNorms(factors)
+  l2norms.frac <- l2norms / sum(l2norms)
+  return(l2norms.frac)
+}
+
+# l2norms.lst <- funlapply(factors, function(jmark){
+#   jfactors <-glmpca.factors[[jmark]]
+#   l2norms <- colNorms(jfactors)
+#   l2norms.frac <- l2norms / sum(l2norms)
+#   return(signif(l2norms.frac, digits = 2) * 100)
+# })
+
+
 
 InitGLMPCAfromLDA <- function(count.mat, tm.result, dat.var.merge, covar.cname = "ncuts.var", bins.keep = 100, do.log = FALSE, svd.on.Yinit = TRUE, use.orig.sz = TRUE){
   
